@@ -1,6 +1,8 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
 #include <SoftwareSerial.h>
+#include <RotaryEncoder.h>
+
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
 //give pins a name
 #define MODE_SWITCH_1_PIN 5
@@ -35,6 +37,7 @@ const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DRBEAT, DRBEAT_ROLLS, DRBEAT_ROLLS_HATS, DRBEAT_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
+RotaryEncoder encoder(A0, A1); // Setup a RoraryEncoder for pins A2 and A3:
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DRBEAT         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -64,6 +67,9 @@ void setup()
     uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
     for (uint8_t i = 0; i < 3; i++) {
         pinMode(mode_pins[i], INPUT);}
+    // You may have to modify the next 2 lines if using other pins than A2 and A3
+    PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
+    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
