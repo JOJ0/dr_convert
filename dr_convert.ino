@@ -9,6 +9,7 @@
 #define MODE_SWITCH_1 digitalRead(MODE_SWITCH_1_PIN)
 #define MODE_SWITCH_2 digitalRead(MODE_SWITCH_2_PIN)
 #define MODE_SWITCH_3 digitalRead(MODE_SWITCH_3_PIN)
+uint8_t mode_pins[3];
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -32,15 +33,10 @@ const uint8_t midi_ch_drbeat = 11;
 const uint8_t midi_ch_volca = 10;
 const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
-enum conv_modes { BYPASS, DRBEAT, DRBEAT_ROLLS, VOLCA };
+enum conv_modes { BYPASS, DRBEAT, DRBEAT_ROLLS, DRBEAT_ROLLS_HATS, DRBEAT_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
 //const uint8_t conv_mode_sw1 = 5;
 //const uint8_t conv_mode_sw2 = 6;
-
-bool conv_mode_switch[2][1] = { // 2 switches/bits saving the wanted convert mode
-    {LOW},
-    {LOW},
-};
 
 struct convert_settings
 {
@@ -84,8 +80,9 @@ uint8_t note_mapping[16][8] = {
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    pinMode(MODE_SWITCH_1_PIN, INPUT);
-    pinMode(MODE_SWITCH_2_PIN, INPUT);
+    uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
+    for (uint8_t i = 0; i < 3; i++) {
+        pinMode(mode_pins[i], INPUT);}
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
@@ -225,26 +222,30 @@ void loop()
     //struct convert_settings settings
     //settings.conv_mode = "DRBEAT_ROLLS"
     //settings.note_map = 2
-    // read in 2 bit conversion mode switches
-    if (MODE_SWITCH_1 == LOW && MODE_SWITCH_2 == LOW)
-    {
+
+    uint8_t mode_bitmask = 0;
+    for (uint8_t i = 0; i < 3; i++) {
+        mode_bitmask = mode_bitmask << 1;
+        mode_bitmask |= digitalRead(mode_pins[i]);
+    }
+    // check bitmask and set mode conv_mode variable
+    if (mode_bitmask == 0) {
         conv_mode = BYPASS;
     }
-    else if (MODE_SWITCH_1 == LOW && MODE_SWITCH_2 == HIGH)
-    {
+    else if (mode_bitmask == 1) {
         conv_mode = VOLCA;
     }
-    else if (MODE_SWITCH_1 == HIGH && MODE_SWITCH_2 == LOW)
-    {
+    else if (mode_bitmask == 10) {
         conv_mode = DRBEAT;
     }
-    else if (MODE_SWITCH_1 == HIGH && MODE_SWITCH_2 == HIGH)
-    {
+    else if (mode_bitmask == 11) {
         conv_mode = DRBEAT_ROLLS;
     }
-    else if (MODE_SWITCH_1 == HIGH && MODE_SWITCH_2 == HIGH)
-    {
-        conv_mode = DRBEAT_ROLLS;
+    else if (mode_bitmask == 111) {
+        conv_mode = DRBEAT_ROLLS_HATS;
+    }
+    else if (mode_bitmask == 101) {
+        conv_mode = DRBEAT_ROLLS_PERC;
     }
 
     // done with switch reading, main program
