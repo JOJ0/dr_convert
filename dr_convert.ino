@@ -35,25 +35,6 @@ const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DRBEAT, DRBEAT_ROLLS, DRBEAT_ROLLS_HATS, DRBEAT_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
-//const uint8_t conv_mode_sw1 = 5;
-//const uint8_t conv_mode_sw2 = 6;
-
-struct convert_settings
-{
-    char* conv_mode;
-    int note_map;
-};
-
-//struct key_value
-//{
-//   int key;
-//   char* value;
-//};
-//
-//struct key_value kv;
-//
-//kv.key = 1;
-//kv.value = "foo";
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DRBEAT         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -219,10 +200,6 @@ void setMessageHandles()
 
 void loop()
 {
-    //struct convert_settings settings
-    //settings.conv_mode = "DRBEAT_ROLLS"
-    //settings.note_map = 2
-
     uint8_t mode_bitmask = 0;
     for (uint8_t i = 0; i < 3; i++) {
         mode_bitmask = mode_bitmask << 1;
