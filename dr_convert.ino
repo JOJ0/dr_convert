@@ -5,9 +5,9 @@
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
 //give pins a name
-#define MODE_SWITCH_1_PIN 5
+#define MODE_SWITCH_1_PIN 7
 #define MODE_SWITCH_2_PIN 6
-#define MODE_SWITCH_3_PIN 7
+#define MODE_SWITCH_3_PIN 5
 #define MODE_SWITCH_1 digitalRead(MODE_SWITCH_1_PIN)
 #define MODE_SWITCH_2 digitalRead(MODE_SWITCH_2_PIN)
 #define MODE_SWITCH_3 digitalRead(MODE_SWITCH_3_PIN)
