@@ -19,8 +19,8 @@ uint8_t mode_pins[3];
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
 // mode 2 -> No MIDI, just debugging via serial monitor
-#define SOFT_SERIAL_DEBUG 1
-const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
+//#define SOFT_SERIAL_DEBUG 1
+const uint8_t mode = 0; // mode 1 needs SoftwareSerial, comment out above!
 
 #ifdef SOFT_SERIAL_DEBUG
     SoftwareSerial MIDIserial(4, 2); // RX, TX
