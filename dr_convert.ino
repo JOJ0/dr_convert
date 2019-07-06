@@ -5,13 +5,13 @@
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
 //give pins a name
-#define MODE_SWITCH_1_PIN 7
+#define MODE_SWITCH_1_PIN 5
 #define MODE_SWITCH_2_PIN 6
-#define MODE_SWITCH_3_PIN 5
+#define MODE_SWITCH_3_PIN 7
 #define MODE_SWITCH_1 digitalRead(MODE_SWITCH_1_PIN)
 #define MODE_SWITCH_2 digitalRead(MODE_SWITCH_2_PIN)
 #define MODE_SWITCH_3 digitalRead(MODE_SWITCH_3_PIN)
-uint8_t mode_pins[3];
+uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -19,8 +19,8 @@ uint8_t mode_pins[3];
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
 // mode 2 -> No MIDI, just debugging via serial monitor
-//#define SOFT_SERIAL_DEBUG 1
-const uint8_t mode = 0; // mode 1 needs SoftwareSerial, comment out above!
+#define SOFT_SERIAL_DEBUG 1
+const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
 
 #ifdef SOFT_SERIAL_DEBUG
     SoftwareSerial MIDIserial(4, 2); // RX, TX
@@ -64,9 +64,6 @@ uint8_t note_mapping[16][8] = {
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
-    for (uint8_t i = 0; i < 3; i++) {
-        pinMode(mode_pins[i], INPUT);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
     PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
@@ -86,6 +83,11 @@ void setup()
         aSerial.on();  // enable debug output
     }
     digitalWrite(ledPin, LOW); // DEBUG LED off
+
+    for (uint8_t i = 0; i < 3; i++) {
+        pinMode(mode_pins[i], INPUT);
+        aSerial.v().p("mode_pins[i] in setup: ").pln(mode_pins[i]);
+    }
 }
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
@@ -206,29 +208,45 @@ void setMessageHandles()
 
 void loop()
 {
+    //uint8_t mode_bitmask = B000;
     uint8_t mode_bitmask = 0;
     for (uint8_t i = 0; i < 3; i++) {
+        aSerial.v().p("current switch state is: ").pln(digitalRead(mode_pins[i]), BIN);
+        aSerial.v().p("bitmask inside for: ").pln(mode_bitmask, BIN);
         mode_bitmask = mode_bitmask << 1;
+        aSerial.v().p("bitmask after bitshift: ").pln(mode_bitmask, BIN);
         mode_bitmask |= digitalRead(mode_pins[i]);
+        aSerial.v().pln("bitmask after bitmask = bitmask | digitalRead(mode_pins[i]): ").pln(mode_bitmask, BIN);
     }
+    aSerial.v().p("after for loop: ").pln(mode_bitmask, BIN);
+    aSerial.v().p("-----------------").pln();
+	delay(4000);
     // check bitmask and set mode conv_mode variable
-    if (mode_bitmask == 0) {
+    if (mode_bitmask == B000) {
         conv_mode = BYPASS;
     }
-    else if (mode_bitmask == 1) {
+    else if (mode_bitmask == B001) {
         conv_mode = VOLCA;
+        aSerial.v().pln("VOLCA mode set");
     }
-    else if (mode_bitmask == 10) {
+    else if (mode_bitmask == B010) {
         conv_mode = DRBEAT;
+        aSerial.v().pln("DRBEAT mode set");
     }
-    else if (mode_bitmask == 11) {
+    else if (mode_bitmask == B011) {
         conv_mode = DRBEAT_ROLLS;
+        aSerial.v().pln("DRBEAT_ROLLS mode set");
     }
-    else if (mode_bitmask == 111) {
+    else if (mode_bitmask == B111) {
         conv_mode = DRBEAT_ROLLS_HATS;
+        aSerial.v().pln("DRBEAT_ROLLS_HATS mode set");
     }
-    else if (mode_bitmask == 101) {
+    else if (mode_bitmask == B101) {
         conv_mode = DRBEAT_ROLLS_PERC;
+        aSerial.v().pln("DRBEAT_ROLLS_PERC mode set");
+    }
+    else {
+        aSerial.v().pln("!! INVALID mode set");
     }
 
     // done with switch reading, main program
