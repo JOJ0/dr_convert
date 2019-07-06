@@ -16,16 +16,16 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
 #define VERBOSITY Level::vvvv
+//#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
-// mode 2 -> No MIDI, just debugging via serial monitor
-#define SOFT_SERIAL_DEBUG 1
-const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
 
 #ifdef SOFT_SERIAL_DEBUG
+    const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
     SoftwareSerial MIDIserial(4, 2); // RX, TX
     MIDI_CREATE_INSTANCE(SoftwareSerial, MIDIserial, MIDI);
 #else
+    const uint8_t mode = 0;
     MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI);
 #endif
 // *** GLOBAL COMPILE AND RUNTIME SETTINGS END ***
@@ -64,6 +64,7 @@ uint8_t note_mapping[16][8] = {
 void setup()
 {
     pinMode(ledPin, OUTPUT);
+    for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
     PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
@@ -84,30 +85,20 @@ void setup()
     }
     digitalWrite(ledPin, LOW); // DEBUG LED off
 
-    for (uint8_t i = 0; i < 3; i++) {
-        pinMode(mode_pins[i], INPUT);
-        aSerial.v().p("mode_pins[i] in setup: ").pln(mode_pins[i]);
-    }
 }
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
 {
     aSerial.vvv().p("sendNoteONandLog: ").pln(note_num);
     aSerial.vvv().pln();
-    if (mode != 2)
-    {
-      MIDI.sendNoteOn(note_num, note_vel, _midi_ch);
-    }
+    MIDI.sendNoteOn(note_num, note_vel, _midi_ch);
 }
 
 void sendNoteOFFandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
 {
     aSerial.vvv().p("sendNoteOFFandLog: ").pln(note_num);
     aSerial.vvv().pln();
-    if (mode != 2)
-    {
-        MIDI.sendNoteOff(note_num, note_vel, _midi_ch);
-    }
+    MIDI.sendNoteOff(note_num, note_vel, _midi_ch);
 }
 
 void handleNoteOn(byte Channel, byte PitchMidi, byte Velocity) {
@@ -162,10 +153,7 @@ void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch)
 {
     aSerial.vvv().p("sending CC: ").pln(cc_num);
     aSerial.vvv().pln();
-    if (mode != 2)
-    {
-        MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
-    }
+    MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
 }
 
 void handleControlChange(byte inChannel, byte inNumber, byte inValue) {
@@ -208,20 +196,12 @@ void setMessageHandles()
 
 void loop()
 {
-    //uint8_t mode_bitmask = B000;
-    uint8_t mode_bitmask = 0;
+    uint8_t mode_bitmask = B000;
     for (uint8_t i = 0; i < 3; i++) {
-        aSerial.v().p("current switch state is: ").pln(digitalRead(mode_pins[i]), BIN);
-        aSerial.v().p("bitmask inside for: ").pln(mode_bitmask, BIN);
         mode_bitmask = mode_bitmask << 1;
-        aSerial.v().p("bitmask after bitshift: ").pln(mode_bitmask, BIN);
         mode_bitmask |= digitalRead(mode_pins[i]);
-        aSerial.v().pln("bitmask after bitmask = bitmask | digitalRead(mode_pins[i]): ").pln(mode_bitmask, BIN);
     }
-    aSerial.v().p("after for loop: ").pln(mode_bitmask, BIN);
-    aSerial.v().p("-----------------").pln();
-	delay(4000);
-    // check bitmask and set mode conv_mode variable
+	//delay(4000); // enable for debugging mode switches
     if (mode_bitmask == B000) {
         conv_mode = BYPASS;
     }
@@ -255,7 +235,7 @@ void loop()
         MIDI.setThruFilterMode(midi::Thru::Full); // all msg from all channels sent thru
         setMessageHandles(); // just for now, later this should not be here -> THRU without hassle
     }
-    else // MODES: DRBEAT, DRBEAT_ROLLS, VOLCA
+    else // MODES: DRBEAT, DRBEAT_ROLLS*, VOLCA
     {
         MIDI.setThruFilterMode(midi::Thru::DifferentChannel); // all msg except from in-channel go thru
         setMessageHandles(); // NoteOn NoteOff CC etc. handles are defined, we wanna manipulate
