@@ -16,7 +16,7 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
 #define VERBOSITY Level::vvv
-#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
+//#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
 
