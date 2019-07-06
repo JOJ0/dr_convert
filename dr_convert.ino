@@ -15,8 +15,8 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
-#define VERBOSITY Level::vvvv
-//#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
+#define VERBOSITY Level::vvv
+#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
 
@@ -201,32 +201,33 @@ void loop()
         mode_bitmask = mode_bitmask << 1;
         mode_bitmask |= digitalRead(mode_pins[i]);
     }
-	//delay(4000); // enable for debugging mode switches
+	//delay(2000); // enable for debugging mode switches
     if (mode_bitmask == B000) {
         conv_mode = BYPASS;
+        aSerial.vvvv().pln("BYPASS mode set");
     }
     else if (mode_bitmask == B001) {
         conv_mode = VOLCA;
-        aSerial.v().pln("VOLCA mode set");
+        aSerial.vvvv().pln("VOLCA mode set");
     }
     else if (mode_bitmask == B010) {
         conv_mode = DRBEAT;
-        aSerial.v().pln("DRBEAT mode set");
+        aSerial.vvvv().pln("DRBEAT mode set");
     }
     else if (mode_bitmask == B011) {
         conv_mode = DRBEAT_ROLLS;
-        aSerial.v().pln("DRBEAT_ROLLS mode set");
+        aSerial.vvvv().pln("DRBEAT_ROLLS mode set");
     }
     else if (mode_bitmask == B111) {
         conv_mode = DRBEAT_ROLLS_HATS;
-        aSerial.v().pln("DRBEAT_ROLLS_HATS mode set");
+        aSerial.vvvv().pln("DRBEAT_ROLLS_HATS mode set");
     }
     else if (mode_bitmask == B101) {
         conv_mode = DRBEAT_ROLLS_PERC;
-        aSerial.v().pln("DRBEAT_ROLLS_PERC mode set");
+        aSerial.vvvv().pln("DRBEAT_ROLLS_PERC mode set");
     }
     else {
-        aSerial.v().pln("!! INVALID mode set");
+        aSerial.vvvv().pln("!! INVALID mode set");
     }
 
     // done with switch reading, main program
