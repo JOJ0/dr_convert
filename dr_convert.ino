@@ -16,7 +16,7 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
 #define VERBOSITY Level::vvv
-//#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
+#define SOFT_SERIAL_DEBUG // comment out this line for mode 0
 // mode 0 -> native MIDI, NO debugging! (Serial can't be used twice)
 // mode 1 -> SoftwareSerial, debugging via serial monitor
 
@@ -66,8 +66,11 @@ void setup()
     pinMode(ledPin, OUTPUT);
     for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
-    PCICR |= (1 << PCIE1);    // This enables Pin Change Interrupt 1 that covers the Analog input pins or Port C.
-    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3 of Port C.
+    PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
+                           // pins or Port C.
+    //PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
+                                                // of Port C.
+    PCMSK1 |= (1 << PCINT00) | (1 << PCINT01);  // This then should probably be pin 0 and 1 
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
@@ -85,6 +88,12 @@ void setup()
     }
     digitalWrite(ledPin, LOW); // DEBUG LED off
 
+}
+
+// The Interrupt Service Routine for Pin Change Interrupt 1
+// This routine will only be called on any signal change on A2 and A3: exactly where we need to check.
+ISR(PCINT1_vect) {
+  encoder.tick(); // just call tick() to check the state.
 }
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
@@ -242,4 +251,22 @@ void loop()
         setMessageHandles(); // NoteOn NoteOff CC etc. handles are defined, we wanna manipulate
     }
     MIDI.read();
+
+    // test rotary encoder
+    static int pos = 0;
+
+    int newPos = encoder.getPosition();
+    if (pos != newPos) {
+      Serial.print(newPos);
+      Serial.println();
+      pos = newPos;
+
+      // Just to show, that long lasting procedures don't break the rotary encoder:
+      // When newPos is 66 the ouput will freeze, but the turned positions will be recognized even
+      // when not polled.
+      // The interrupt still works.
+      // The output is correct 6.6 seconds later.
+      if (newPos == 66)
+        delay(6600);
+    }
 }
