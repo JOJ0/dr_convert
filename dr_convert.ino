@@ -35,12 +35,12 @@ const uint8_t midi_ch_drbeat = 11;
 const uint8_t midi_ch_volca = 10;
 const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
-enum conv_modes { BYPASS, DRBEAT, DRBEAT_ROLLS, DRBEAT_ROLLS_HATS, DRBEAT_ROLLS_PERC, VOLCA };
+enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
 RotaryEncoder encoder(A0, A1); // Setup a RoraryEncoder for pins A2 and A3:
 
 uint8_t note_mapping[16][8] = {
-    // first 8 pads   DRBEAT         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
+    // first 8 pads   DR202         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
     {36, 36,100,36}, // KICK 1       (ALL)     (HATS)       (PERC)        KICK    
     {37, 35,101,75}, // KICK 2                                            CLAVES  
     {38, 38,102,38}, // SNARE 1                                           SNARE   
@@ -112,11 +112,11 @@ void handleNoteOn(byte Channel, byte PitchMidi, byte Velocity) {
         {                                           // is one of the 16 notes of our drumpad 
             if (conv_mode == BYPASS) {
                 aSerial.vvv().p("BYPASS MODE - all thru: ").pln(note_mapping[note_pos][0]).pln();}
-            else if (conv_mode == DRBEAT) {
-                aSerial.vvv().p("DRBEAT NoteON: ").pln(note_mapping[note_pos][1]);
+            else if (conv_mode == DR202) {
+                aSerial.vvv().p("DR202 NoteON: ").pln(note_mapping[note_pos][1]);
                 sendNoteONandLog(note_mapping[note_pos][1], Velocity, Channel);}
-            else if (conv_mode == DRBEAT_ROLLS) {
-                aSerial.vvv().p("DRBEAT_ROLLS NoteON: ").pln(note_mapping[note_pos][2]);
+            else if (conv_mode == DR202_ROLLS) {
+                aSerial.vvv().p("DR202_ROLLS NoteON: ").pln(note_mapping[note_pos][2]);
                 sendNoteONandLog(note_mapping[note_pos][2], Velocity, Channel);}
             else if (conv_mode == VOLCA) {
                 aSerial.vvv().p("VOLCA NoteON: ").pln(note_mapping[note_pos][3]);
@@ -136,11 +136,11 @@ void handleNoteOff(byte Channel, byte PitchMidi, byte Velocity) { // NoteOn with
         {                                           // is one of the 16 notes of our drumpad 
             if (conv_mode == BYPASS) {
                 aSerial.vvv().p("BYPASS MODE - all thru: ").pln(note_mapping[note_pos][0]).pln();}
-            else if (conv_mode == DRBEAT) {
-                aSerial.vvv().p("DRBEAT NoteOFF: ").pln(note_mapping[note_pos][1]);
+            else if (conv_mode == DR202) {
+                aSerial.vvv().p("DR202 NoteOFF: ").pln(note_mapping[note_pos][1]);
                 sendNoteOFFandLog(note_mapping[note_pos][1], Velocity, Channel);}
-            else if (conv_mode == DRBEAT_ROLLS) {
-                aSerial.vvv().p("DRBEAT_ROLLS NoteOFF: ").pln(note_mapping[note_pos][2]);
+            else if (conv_mode == DR202_ROLLS) {
+                aSerial.vvv().p("DR202_ROLLS NoteOFF: ").pln(note_mapping[note_pos][2]);
                 sendNoteOFFandLog(note_mapping[note_pos][2], Velocity, Channel);}
             else if (conv_mode == VOLCA) {
                 aSerial.vvv().p("VOLCA NoteOFF: ").pln(note_mapping[note_pos][3]);
@@ -211,20 +211,20 @@ void loop()
         aSerial.vvvv().pln("VOLCA mode set");
     }
     else if (mode_bitmask == B010) {
-        conv_mode = DRBEAT;
-        aSerial.vvvv().pln("DRBEAT mode set");
+        conv_mode = DR202;
+        aSerial.vvvv().pln("DR202 mode set");
     }
     else if (mode_bitmask == B011) {
-        conv_mode = DRBEAT_ROLLS;
-        aSerial.vvvv().pln("DRBEAT_ROLLS mode set");
+        conv_mode = DR202_ROLLS;
+        aSerial.vvvv().pln("DR202_ROLLS mode set");
     }
     else if (mode_bitmask == B111) {
-        conv_mode = DRBEAT_ROLLS_HATS;
-        aSerial.vvvv().pln("DRBEAT_ROLLS_HATS mode set");
+        conv_mode = DR202_ROLLS_HATS;
+        aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
     }
     else if (mode_bitmask == B101) {
-        conv_mode = DRBEAT_ROLLS_PERC;
-        aSerial.vvvv().pln("DRBEAT_ROLLS_PERC mode set");
+        conv_mode = DR202_ROLLS_PERC;
+        aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
     }
     else {
         aSerial.vvvv().pln("!! INVALID mode set");
@@ -236,7 +236,7 @@ void loop()
         MIDI.setThruFilterMode(midi::Thru::Full); // all msg from all channels sent thru
         setMessageHandles(); // just for now, later this should not be here -> THRU without hassle
     }
-    else // MODES: DRBEAT, DRBEAT_ROLLS*, VOLCA
+    else // MODES: DR202, DR202_ROLLS*, VOLCA
     {
         MIDI.setThruFilterMode(midi::Thru::DifferentChannel); // all msg except from in-channel go thru
         setMessageHandles(); // NoteOn NoteOff CC etc. handles are defined, we wanna manipulate
