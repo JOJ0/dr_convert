@@ -1,6 +1,7 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
-#include <SoftwareSerial.h>
+//#include <SoftwareSerial.h>
+#include <NeoSWSerial.h>
 #include <RotaryEncoder.h>
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
@@ -22,8 +23,9 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 
 #ifdef SOFT_SERIAL_DEBUG
     const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
-    SoftwareSerial MIDIserial(4, 2); // RX, TX
-    MIDI_CREATE_INSTANCE(SoftwareSerial, MIDIserial, MIDI);
+    //SoftwareSerial SoftSerial(4, 2); // RX, TX
+    NeoSWSerial SoftSerial(4, 2); // RX, TX
+    MIDI_CREATE_INSTANCE(NeoSWSerial, SoftSerial, MIDI);
 #else
     const uint8_t mode = 0;
     MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI);
@@ -68,9 +70,9 @@ void setup()
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
                            // pins or Port C.
-    //PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
+    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
                                                 // of Port C.
-    PCMSK1 |= (1 << PCINT00) | (1 << PCINT01);  // This then should probably be pin 0 and 1 
+    //PCMSK1 |= (1 << PCINT00) | (1 << PCINT01);  // This then should probably be pin 0 and 1 
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
