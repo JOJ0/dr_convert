@@ -29,9 +29,10 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
     #define RX_PIN 4
     #define TX_PIN 2
     NeoSWSerial SoftSerial(RX_PIN, TX_PIN); // RX, TX
-    ISR(PCINT1_vect) { // or whatever
-        NeoSWSerial::rxISR( *portInputRegister( digitalPinToPort( RX_PIN ) ) );
+    ISR(PCINT0_vect) { // or whatever
+        //NeoSWSerial::rxISR( *portInputRegister( digitalPinToPort( RX_PIN ) ) );
         // or, if you know the port register:    NeoSWSerial::rxISR( PIND );
+        NeoSWSerial::rxISR( PIND ); // Port D is dig pins 0..7
     }
     //void myISR()
     //{
