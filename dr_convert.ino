@@ -1,7 +1,7 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
 #include <AltSoftSerial.h>
-//#include <RotaryEncoder.h>
+#include <RotaryEncoder.h>
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
 //give pins a name
@@ -25,7 +25,6 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
     const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
     AltSoftSerial SoftSerial;
     MIDI_CREATE_INSTANCE(AltSoftSerial, SoftSerial, MIDI);
-
 #else
     const uint8_t mode = 0;
     MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI);
@@ -39,7 +38,7 @@ const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
-//RotaryEncoder encoder(A0, A1); // Setup a RoraryEncoder for pins A2 and A3:
+RotaryEncoder encoder(A2, A3); // Setup a RoraryEncoder for pins A2 and A3:
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DR202         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -69,9 +68,9 @@ void setup()
     //pinMode(ROTARY_SWITCH_3_PIN, INPUT);
     for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
-    //PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
-                           // pins or Port C.
-    //PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
+    PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
+                         // pins or Port C.
+    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
                                                 // of Port C.
     //PCMSK1 |= (1 << PCINT00) | (1 << PCINT01);  // This then should probably be pin 0 and 1 
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
@@ -95,9 +94,9 @@ void setup()
 
 // The Interrupt Service Routine for Pin Change Interrupt 1
 // This routine will only be called on any signal change on A2 and A3: exactly where we need to check.
-//ISR(PCINT1_vect) {
-//  encoder.tick(); // just call tick() to check the state.
-//}
+ISR(PCINT1_vect) {
+  encoder.tick(); // just call tick() to check the state.
+}
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
 {
@@ -264,20 +263,20 @@ void loop()
     
 
     // test rotary encoder
-    //static int pos = 0;
+    static int pos = 0;
 
-    //int newPos = encoder.getPosition();
-    //if (pos != newPos) {
-    //  Serial.print(newPos);
-    //  Serial.println();
-    //  pos = newPos;
+    int newPos = encoder.getPosition();
+    if (pos != newPos) {
+      Serial.print(newPos);
+      Serial.println();
+      pos = newPos;
 
-    //  // Just to show, that long lasting procedures don't break the rotary encoder:
-    //  // When newPos is 66 the ouput will freeze, but the turned positions will be recognized even
-    //  // when not polled.
-    //  // The interrupt still works.
-    //  // The output is correct 6.6 seconds later.
-    //  if (newPos == 66)
-    //    delay(6600);
-    //}
+      // Just to show, that long lasting procedures don't break the rotary encoder:
+      // When newPos is 66 the ouput will freeze, but the turned positions will be recognized even
+      // when not polled.
+      // The interrupt still works.
+      // The output is correct 6.6 seconds later.
+      if (newPos == 66)
+        delay(6600);
+    }
 }
