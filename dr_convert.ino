@@ -1,7 +1,6 @@
 #include <MIDI.h>
 #include <advancedSerial.h>
-//#include <SoftwareSerial.h>
-#include <NeoSWSerial.h>
+#include <AltSoftSerial.h>
 //#include <RotaryEncoder.h>
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
@@ -24,22 +23,9 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 
 #ifdef SOFT_SERIAL_DEBUG
     const uint8_t mode = 1; // mode 1 needs SoftwareSerial, comment out above!
-    //SoftwareSerial SoftSerial(4, 2); // RX, TX
-    //MIDI_CREATE_INSTANCE(SoftwareSerial, SoftSerial, MIDI);
-    #define RX_PIN 4
-    #define TX_PIN 2
-    NeoSWSerial SoftSerial(RX_PIN, TX_PIN); // RX, TX
-    ISR(PCINT0_vect) { // or whatever
-        //NeoSWSerial::rxISR( *portInputRegister( digitalPinToPort( RX_PIN ) ) );
-        // or, if you know the port register:    NeoSWSerial::rxISR( PIND );
-        NeoSWSerial::rxISR( PIND ); // Port D is dig pins 0..7
-    }
-    //void myISR()
-    //{
-    //    NeoSWSerial::rxISR( *portInputRegister( digitalPinToPort( RX_PIN ) ) );
-    //}
+    AltSoftSerial SoftSerial;
+    MIDI_CREATE_INSTANCE(AltSoftSerial, SoftSerial, MIDI);
 
-    MIDI_CREATE_INSTANCE(NeoSWSerial, SoftSerial, MIDI);
 #else
     const uint8_t mode = 0;
     MIDI_CREATE_INSTANCE(HardwareSerial, USBserial, MIDI);
@@ -97,7 +83,6 @@ void setup()
         aSerial.off();  // disable debug output
     else
     {
-        //enableInterrupt( RX_PIN, myISR, CHANGE );
         USBserial.begin(9600);  // common serial rate -> debugging
         aSerial.setPrinter(USBserial);  // debugging settings
         aSerial.setFilter(VERBOSITY); // debugging settings
