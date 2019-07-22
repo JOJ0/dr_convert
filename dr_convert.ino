@@ -65,7 +65,7 @@ uint8_t note_mapping[16][8] = {
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    //pinMode(ROTARY_SWITCH_3_PIN, INPUT);
+    pinMode(ROTARY_SWITCH_3_PIN, INPUT_PULLUP);
     for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
@@ -255,11 +255,14 @@ void loop()
     MIDI.read();
 
     // test rotary switch
-    //if (digitalRead(ROTARY_SWITCH_3_PIN)) {
-    //    digitalWrite(ledPin, HIGH);
-    //    delay(1000);
-    //    digitalWrite(ledPin, LOW);
-    //}
+    if (digitalRead(ROTARY_SWITCH_3_PIN == HIGH)) {
+        //aSerial.vvv().pln("Rotary 3 Button pressed");
+        digitalWrite(ledPin, LOW);
+    }
+    if (digitalRead(ROTARY_SWITCH_3_PIN == LOW)) {
+        //aSerial.vvv().pln("Rotary 3 Button NOT pressed");
+        digitalWrite(ledPin, HIGH);
+    }
     
 
     // test rotary encoder
@@ -276,7 +279,7 @@ void loop()
       // when not polled.
       // The interrupt still works.
       // The output is correct 6.6 seconds later.
-      if (newPos == 66)
-        delay(6600);
+      //if (newPos == 66)
+      //  delay(6600);
     }
 }
