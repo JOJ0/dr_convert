@@ -8,11 +8,11 @@
 #define MODE_SWITCH_1_PIN 5
 #define MODE_SWITCH_2_PIN 6
 #define MODE_SWITCH_3_PIN 7
-#define MODE_SWITCH_1 digitalRead(MODE_SWITCH_1_PIN)
-#define MODE_SWITCH_2 digitalRead(MODE_SWITCH_2_PIN)
-#define MODE_SWITCH_3 digitalRead(MODE_SWITCH_3_PIN)
+#define MODE_SWITCH_1_STATE digitalRead(MODE_SWITCH_1_PIN)
+#define MODE_SWITCH_2_STATE digitalRead(MODE_SWITCH_2_PIN)
+#define MODE_SWITCH_3_STATE digitalRead(MODE_SWITCH_3_PIN)
 uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
-#define ROTARY_SWITCH_3_PIN 12
+#define ROTARY_SWITCH_1_PIN 12
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -61,12 +61,16 @@ uint8_t note_mapping[16][8] = {
     {51, 51,107,51}, // RIDE                                ROLL HIT 3            
 };
 
+static int buttonState = 0;
+static int lastButtonState = 0;
 
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    pinMode(ROTARY_SWITCH_3_PIN, INPUT_PULLUP);
-    for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
+    pinMode(ROTARY_SWITCH_1_PIN, INPUT_PULLUP);
+    //for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
+    // test MODE_SWITCH_1
+    pinMode(MODE_SWITCH_1_PIN, INPUT_PULLUP);
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
                          // pins or Port C.
@@ -207,39 +211,39 @@ void setMessageHandles()
 
 void loop()
 {
-    uint8_t mode_bitmask = B000;
-    for (uint8_t i = 0; i < 3; i++) {
-        mode_bitmask = mode_bitmask << 1;
-        mode_bitmask |= digitalRead(mode_pins[i]);
-    }
-	//delay(2000); // enable for debugging mode switches
-    if (mode_bitmask == B000) {
-        conv_mode = BYPASS;
-        aSerial.vvvv().pln("BYPASS mode set");
-    }
-    else if (mode_bitmask == B001) {
-        conv_mode = VOLCA;
-        aSerial.vvvv().pln("VOLCA mode set");
-    }
-    else if (mode_bitmask == B010) {
-        conv_mode = DR202;
-        aSerial.vvvv().pln("DR202 mode set");
-    }
-    else if (mode_bitmask == B011) {
-        conv_mode = DR202_ROLLS;
-        aSerial.vvvv().pln("DR202_ROLLS mode set");
-    }
-    else if (mode_bitmask == B111) {
-        conv_mode = DR202_ROLLS_HATS;
-        aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
-    }
-    else if (mode_bitmask == B101) {
-        conv_mode = DR202_ROLLS_PERC;
-        aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
-    }
-    else {
-        aSerial.vvvv().pln("!! INVALID mode set");
-    }
+    //uint8_t mode_bitmask = B000;
+    //for (uint8_t i = 0; i < 3; i++) {
+    //    mode_bitmask = mode_bitmask << 1;
+    //    mode_bitmask |= digitalRead(mode_pins[i]);
+    //}
+    //    //delay(2000); // enable for debugging mode switches
+    //if (mode_bitmask == B000) {
+    //    conv_mode = BYPASS;
+    //    aSerial.vvvv().pln("BYPASS mode set");
+    //}
+    //else if (mode_bitmask == B001) {
+    //    conv_mode = VOLCA;
+    //    aSerial.vvvv().pln("VOLCA mode set");
+    //}
+    //else if (mode_bitmask == B010) {
+    //    conv_mode = DR202;
+    //    aSerial.vvvv().pln("DR202 mode set");
+    //}
+    //else if (mode_bitmask == B011) {
+    //    conv_mode = DR202_ROLLS;
+    //    aSerial.vvvv().pln("DR202_ROLLS mode set");
+    //}
+    //else if (mode_bitmask == B111) {
+    //    conv_mode = DR202_ROLLS_HATS;
+    //    aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
+    //}
+    //else if (mode_bitmask == B101) {
+    //    conv_mode = DR202_ROLLS_PERC;
+    //    aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
+    //}
+    //else {
+    //    aSerial.vvvv().pln("!! INVALID mode set");
+    //}
 
     // done with switch reading, main program
     if (conv_mode == BYPASS)
@@ -255,15 +259,13 @@ void loop()
     MIDI.read();
 
     // test rotary switch
-    if (digitalRead(ROTARY_SWITCH_3_PIN == HIGH)) {
-        //aSerial.vvv().pln("Rotary 3 Button pressed");
-        digitalWrite(ledPin, LOW);
-    }
-    if (digitalRead(ROTARY_SWITCH_3_PIN == LOW)) {
-        //aSerial.vvv().pln("Rotary 3 Button NOT pressed");
-        digitalWrite(ledPin, HIGH);
-    }
+    //buttonState = digitalRead(ROTARY_SWITCH_1_PIN);
+    buttonState = MODE_SWITCH_3_STATE;
     
+    if (buttonState != lastButtonState) {
+        aSerial.vvv().p("Rotary 1 Button changed to ").pln(buttonState);
+    }
+    lastButtonState = buttonState;
 
     // test rotary encoder
     static int pos = 0;
@@ -274,12 +276,5 @@ void loop()
       Serial.println();
       pos = newPos;
 
-      // Just to show, that long lasting procedures don't break the rotary encoder:
-      // When newPos is 66 the ouput will freeze, but the turned positions will be recognized even
-      // when not polled.
-      // The interrupt still works.
-      // The output is correct 6.6 seconds later.
-      //if (newPos == 66)
-      //  delay(6600);
     }
 }
