@@ -4,6 +4,8 @@
 #include <RotaryEncoder.h>
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
+#define PRESSED LOW
+#define RELEASED HIGH
 //give pins a name
 #define MODE_SWITCH_1_PIN 5
 #define MODE_SWITCH_2_PIN 6
@@ -62,7 +64,7 @@ uint8_t note_mapping[16][8] = {
 };
 
 static int buttonState = 0;
-static int lastButtonState = 0;
+static int lastButtonState[4] = {0,0,0,0};
 
 void setup()
 {
@@ -209,6 +211,22 @@ void setMessageHandles()
     MIDI.setHandleClock(handleClock);
 }
 
+uint8_t getButtonState(uint8_t buttonPin) {
+    uint8_t changed = 0;
+    buttonState = digitalRead(buttonPin);
+    if (buttonState != lastButtonState[buttonPin]) {
+        aSerial.vvv().p("Button on pin ").p(buttonPin).p(" changed to ").pln(buttonState);
+        changed = 1;
+    }
+    lastButtonState[buttonPin] = buttonState;
+    if (changed == 1) {
+	return buttonState;
+    }
+    else {
+        return lastButtonState[buttonPin];
+    }
+}
+
 void loop()
 {
     //uint8_t mode_bitmask = B000;
@@ -245,7 +263,7 @@ void loop()
     //    aSerial.vvvv().pln("!! INVALID mode set");
     //}
 
-    // done with switch reading, main program
+   // done with switch reading, main program
     if (conv_mode == BYPASS)
     {
         MIDI.setThruFilterMode(midi::Thru::Full); // all msg from all channels sent thru
@@ -258,14 +276,14 @@ void loop()
     }
     MIDI.read();
 
-    // test rotary switch
-    //buttonState = digitalRead(ROTARY_SWITCH_1_PIN);
-    buttonState = MODE_SWITCH_3_STATE;
-    
-    if (buttonState != lastButtonState) {
-        aSerial.vvv().p("Rotary 1 Button changed to ").pln(buttonState);
+    //if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
+    if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
+        // aSerial.vvv().pln("Rotary 1 Button is pressed");
     }
-    lastButtonState = buttonState;
+    else {
+        // aSerial.vvv().pln("Rotary 1 Button is released");
+    }
+
 
     // test rotary encoder
     static int pos = 0;
