@@ -229,39 +229,39 @@ uint8_t getButtonState(uint8_t buttonPin) {
 
 void loop()
 {
-    //uint8_t mode_bitmask = B000;
-    //for (uint8_t i = 0; i < 3; i++) {
-    //    mode_bitmask = mode_bitmask << 1;
-    //    mode_bitmask |= digitalRead(mode_pins[i]);
-    //}
-    //    //delay(2000); // enable for debugging mode switches
-    //if (mode_bitmask == B000) {
-    //    conv_mode = BYPASS;
-    //    aSerial.vvvv().pln("BYPASS mode set");
-    //}
-    //else if (mode_bitmask == B001) {
-    //    conv_mode = VOLCA;
-    //    aSerial.vvvv().pln("VOLCA mode set");
-    //}
-    //else if (mode_bitmask == B010) {
-    //    conv_mode = DR202;
-    //    aSerial.vvvv().pln("DR202 mode set");
-    //}
-    //else if (mode_bitmask == B011) {
-    //    conv_mode = DR202_ROLLS;
-    //    aSerial.vvvv().pln("DR202_ROLLS mode set");
-    //}
-    //else if (mode_bitmask == B111) {
-    //    conv_mode = DR202_ROLLS_HATS;
-    //    aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
-    //}
-    //else if (mode_bitmask == B101) {
-    //    conv_mode = DR202_ROLLS_PERC;
-    //    aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
-    //}
-    //else {
-    //    aSerial.vvvv().pln("!! INVALID mode set");
-    //}
+    uint8_t mode_bitmask = B000;
+    for (uint8_t i = 0; i < 3; i++) {
+        mode_bitmask = mode_bitmask << 1;
+        mode_bitmask |= digitalRead(mode_pins[i]);
+    }
+    //delay(2000); // enable for debugging mode switches
+    if (mode_bitmask == B000) {
+        conv_mode = BYPASS;
+        aSerial.vvvv().pln("BYPASS mode set");
+    }
+    else if (mode_bitmask == B001) {
+        conv_mode = VOLCA;
+        aSerial.vvvv().pln("VOLCA mode set");
+    }
+    else if (mode_bitmask == B010) {
+        conv_mode = DR202;
+        aSerial.vvvv().pln("DR202 mode set");
+    }
+    else if (mode_bitmask == B011) {
+        conv_mode = DR202_ROLLS;
+        aSerial.vvvv().pln("DR202_ROLLS mode set");
+    }
+    else if (mode_bitmask == B111) {
+        conv_mode = DR202_ROLLS_HATS;
+        aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
+    }
+    else if (mode_bitmask == B101) {
+        conv_mode = DR202_ROLLS_PERC;
+        aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
+    }
+    else {
+        aSerial.vvvv().pln("!! INVALID mode set");
+    }
 
    // done with switch reading, main program
     if (conv_mode == BYPASS)
@@ -276,8 +276,8 @@ void loop()
     }
     MIDI.read();
 
-    //if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
-    if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
+    if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
+    //if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
         // aSerial.vvv().pln("Rotary 1 Button is pressed");
     }
     else {
