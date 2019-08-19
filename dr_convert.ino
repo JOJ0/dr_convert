@@ -40,7 +40,8 @@ const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
-RotaryEncoder encoder(A2, A3); // Setup a RoraryEncoder for pins A2 and A3:
+RotaryEncoder encoder1(A0, A1);
+RotaryEncoder encoder2(A2, A3); // Setup a RoraryEncoder for pins A2 and A3:
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DR202         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -75,10 +76,16 @@ void setup()
     pinMode(MODE_SWITCH_1_PIN, INPUT_PULLUP);
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
-                         // pins or Port C.
+                           // pins or Port C.
+    PCMSK1 |= (1 << PCINT8) | (1 << PCINT9);
     PCMSK1 |= (1 << PCINT10) | (1 << PCINT11);  // This enables the interrupt for pin 2 and 3
                                                 // of Port C.
-    //PCMSK1 |= (1 << PCINT00) | (1 << PCINT01);  // This then should probably be pin 0 and 1 
+    // enabling Pin Change Interrupts might be easier to understand in binary:
+    //PCICR |= 0b00000001;    // turn on port b
+    //PCICR |= 0b00000010;    // turn on port c
+    //PCICR |= 0b00000100;    // turn on port d
+    //PCICR |= 0b00000111;    // turn on all ports
+
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
@@ -101,7 +108,8 @@ void setup()
 // The Interrupt Service Routine for Pin Change Interrupt 1
 // This routine will only be called on any signal change on A2 and A3: exactly where we need to check.
 ISR(PCINT1_vect) {
-  encoder.tick(); // just call tick() to check the state.
+  encoder1.tick();
+  encoder2.tick(); // just call tick() to check the state.
 }
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
@@ -288,11 +296,10 @@ void loop()
     // test rotary encoder
     static int pos = 0;
 
-    int newPos = encoder.getPosition();
+    int newPos = encoder1.getPosition();
     if (pos != newPos) {
-      Serial.print(newPos);
-      Serial.println();
-      pos = newPos;
+        aSerial.vvv().p("Rotary encoder ").p("changed to ").pln(newPos);
+        pos = newPos;
 
     }
 }
