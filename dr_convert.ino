@@ -244,8 +244,22 @@ uint8_t getButtonState(uint8_t buttonPin) {
     }
 }
 
-//uint8_t getEncoderPosition(uint8_t encNumber, uint8_t rotaryMin, uint8_t rotaryMax) {
-//}
+uint8_t getEncoderPosition(uint8_t encNumber, uint8_t rotaryMin, uint8_t rotaryMax) {
+    currentEncoderPos[encNumber] = encoder[encNumber].getPosition();
+
+    if (currentEncoderPos[encNumber] < rotaryMin) {
+        currentEncoderPos[encNumber] = rotaryMin;
+    }
+    else if (currentEncoderPos[encNumber] > rotaryMax) {
+        currentEncoderPos[encNumber] = rotaryMax;
+    }
+
+    if (lastEncoderPos[encNumber] != currentEncoderPos[encNumber]) {
+        aSerial.vvv().p("Rotary encoder encNumber ").p("changed to ").pln(currentEncoderPos[encNumber]);
+        lastEncoderPos[encNumber] = currentEncoderPos[encNumber];
+    }
+    return currentEncoderPos[encNumber];
+}
 
 
 void loop()
@@ -307,10 +321,10 @@ void loop()
 
 
     //lastEncoderPos[0] = 0;
-    //if (getEncoderPosition(0, ROTARYMIN, ROTARYMAX) == 0) {
-    //    aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
-	//    //sendCCandLog(cc_num, cc_value,_midi_ch)
-    //}
+    if (getEncoderPosition(0, ROTARYMIN, ROTARYMAX) == 0) {
+        aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
+	    //sendCCandLog(cc_num, cc_value,_midi_ch)
+    }
 
     currentEncoderPos[0] = encoder[0].getPosition();
 
