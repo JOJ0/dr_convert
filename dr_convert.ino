@@ -244,7 +244,7 @@ uint8_t getButtonState(uint8_t buttonPin) {
     }
 }
 
-uint8_t getEncoderPosition(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
+uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
     currentEncoderPos[encNum] = encoder[encNum].getPosition();
 
     if (currentEncoderPos[encNum] < rotaryMin) {
@@ -266,7 +266,7 @@ uint8_t getEncoderPosition(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax)
 
 void loop()
 {
-    if (getEncoderPosition(0, ROTARYMIN, ROTARYMAX) == 0) {
+    if (getEncoderPos(0, ROTARYMIN, ROTARYMAX) == 0) {
         //aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
 	    //sendCCandLog(cc_num, cc_value,_midi_ch)
     }
