@@ -244,32 +244,47 @@ uint8_t getButtonState(uint8_t buttonPin) {
     }
 }
 
-uint8_t getEncoderPosition(uint8_t encNumber, uint8_t rotaryMin, uint8_t rotaryMax) {
-    currentEncoderPos[encNumber] = encoder[encNumber].getPosition();
+uint8_t getEncoderPosition(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
+    currentEncoderPos[encNum] = encoder[encNum].getPosition();
 
-    if (currentEncoderPos[encNumber] < rotaryMin) {
-        currentEncoderPos[encNumber] = rotaryMin;
+    if (currentEncoderPos[encNum] < rotaryMin) {
+        currentEncoderPos[encNum] = rotaryMin;
+        encoder[encNum].setPosition(rotaryMin);
     }
-    else if (currentEncoderPos[encNumber] > rotaryMax) {
-        currentEncoderPos[encNumber] = rotaryMax;
+    else if (currentEncoderPos[encNum] > rotaryMax) {
+        currentEncoderPos[encNum] = rotaryMax;
+        encoder[encNum].setPosition(rotaryMax);
     }
 
-    if (lastEncoderPos[encNumber] != currentEncoderPos[encNumber]) {
-        aSerial.vvv().p("Rotary encoder encNumber ").p("changed to ").pln(currentEncoderPos[encNumber]);
-        lastEncoderPos[encNumber] = currentEncoderPos[encNumber];
+    if (lastEncoderPos[encNum] != currentEncoderPos[encNum]) {
+        aSerial.vvv().p("Rotary encoder ").p(encNum).p(" changed to ").pln(currentEncoderPos[encNum]);
+        lastEncoderPos[encNum] = currentEncoderPos[encNum];
     }
-    return currentEncoderPos[encNumber];
+    return currentEncoderPos[encNum];
 }
 
 
 void loop()
 {
+    if (getEncoderPosition(0, ROTARYMIN, ROTARYMAX) == 0) {
+        //aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
+	    //sendCCandLog(cc_num, cc_value,_midi_ch)
+    }
+    if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
+    //if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
+        // aSerial.vvv().pln("Rotary 1 Button is pressed");
+    }
+    else {
+        // aSerial.vvv().pln("Rotary 1 Button is released");
+    }
+
     uint8_t mode_bitmask = B000;
     for (uint8_t i = 0; i < 3; i++) {
         mode_bitmask = mode_bitmask << 1;
         mode_bitmask |= digitalRead(mode_pins[i]);
     }
     //delay(2000); // enable for debugging mode switches
+
     if (mode_bitmask == B000) {
         conv_mode = BYPASS;
         aSerial.vvvv().pln("BYPASS mode set");
@@ -311,41 +326,4 @@ void loop()
     }
     MIDI.read();
 
-    if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
-    //if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
-        // aSerial.vvv().pln("Rotary 1 Button is pressed");
-    }
-    else {
-        // aSerial.vvv().pln("Rotary 1 Button is released");
-    }
-
-
-    //lastEncoderPos[0] = 0;
-    if (getEncoderPosition(0, ROTARYMIN, ROTARYMAX) == 0) {
-        aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
-	    //sendCCandLog(cc_num, cc_value,_midi_ch)
-    }
-
-    currentEncoderPos[0] = encoder[0].getPosition();
-
-    if (currentEncoderPos[0] < ROTARYMIN) {
-        currentEncoderPos[0] = ROTARYMIN;
-    }
-    else if (currentEncoderPos[0] > ROTARYMAX) {
-        currentEncoderPos[0] = ROTARYMAX;
-    }
-
-    if (lastEncoderPos[0] != currentEncoderPos[0]) {
-        aSerial.vvv().p("Rotary encoder 0 ").p("changed to ").pln(currentEncoderPos[0]);
-        lastEncoderPos[0] = currentEncoderPos[0];
-    }
-
-
-    // test rotary encoder1
-    //static int pos = 0;
-    //int newPos = encoder1.getPosition();
-    //if (pos != newPos) {
-    //    aSerial.vvv().p("Rotary encoder ").p("changed to ").pln(newPos);
-    //    pos = newPos;
-    //}
 }
