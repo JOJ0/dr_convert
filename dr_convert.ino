@@ -266,10 +266,6 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
 
 void loop()
 {
-    if (getEncoderPos(0, ROTARYMIN, ROTARYMAX) == 0) {
-        //aSerial.vvv().p("Rotary encoder 0 ").p("is 0");
-	    //sendCCandLog(cc_num, cc_value,_midi_ch)
-    }
     if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
     //if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
         // aSerial.vvv().pln("Rotary 1 Button is pressed");
@@ -278,13 +274,24 @@ void loop()
         // aSerial.vvv().pln("Rotary 1 Button is released");
     }
 
+    uint8_t modeEncoderPos = getEncoderPos(0, ROTARYMIN, ROTARYMAX);
+    switch (modeEncoderPos) {
+        case 0:
+            conv_mode = BYPASS;
+            break;
+        case 1:
+            conv_mode = VOLCA;
+            //aSerial.vvv().pln("VOLCA mode set");
+            break;
+    }
+
+
     uint8_t mode_bitmask = B000;
     for (uint8_t i = 0; i < 3; i++) {
         mode_bitmask = mode_bitmask << 1;
         mode_bitmask |= digitalRead(mode_pins[i]);
     }
     //delay(2000); // enable for debugging mode switches
-
     if (mode_bitmask == B000) {
         conv_mode = BYPASS;
         aSerial.vvvv().pln("BYPASS mode set");
