@@ -331,23 +331,23 @@ void loop()
             break;
         case 1:
             conv_mode = VOLCA;
-            digitalWrite(ledPin, LOW);
+            prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
             break;
         case 2:
             conv_mode = DR202;
-            prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
+            prevMillisLedBuiltin = blinkLed(ledPin, 500, prevMillisLedBuiltin);
             break;
         case 3:
             conv_mode = DR202_ROLLS;
-            digitalWrite(ledPin, LOW);
+            prevMillisLedBuiltin = blinkLed(ledPin, 250, prevMillisLedBuiltin);
             break;
         case 4:
             conv_mode = DR202_ROLLS_HATS;
-            digitalWrite(ledPin, LOW);
+            prevMillisLedBuiltin = blinkLed(ledPin, 125, prevMillisLedBuiltin);
             break;
         case 5:
             conv_mode = DR202_ROLLS_PERC;
-            digitalWrite(ledPin, LOW);
+            prevMillisLedBuiltin = blinkLed(ledPin, 63, prevMillisLedBuiltin);
             break;
     }
     if (conv_mode != last_conv_mode) {
