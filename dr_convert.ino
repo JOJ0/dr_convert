@@ -268,22 +268,23 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
     return currentEncoderPos[encNum];
 }
 
-void blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) }
+long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
     unsigned long currentMillis = millis();
 
     if (currentMillis - previousMillis >= interval) {
+        //aSerial.vvv().pln("interval reached ");
         // save the last time you blinked the LED
         previousMillis = currentMillis;
-
+        bool ledState = digitalRead(ledPin);
         // if the LED is off turn it on and vice-versa:
         if (ledState == LOW) {
             ledState = HIGH;
-        }
-        else {
+        } else {
             ledState = LOW;
         }
         digitalWrite(ledPin, ledState);
     }
+    return previousMillis;
 }
 
 void loop()
@@ -326,28 +327,36 @@ void loop()
     switch (modeEncoderPos) {
         case 0:
             conv_mode = BYPASS;
+            digitalWrite(ledPin, LOW);
             break;
         case 1:
             conv_mode = VOLCA;
+            digitalWrite(ledPin, LOW);
             break;
         case 2:
             conv_mode = DR202;
-            blinkLed(13, 1000, prevMillisLedBuiltin);
+            prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
             break;
         case 3:
             conv_mode = DR202_ROLLS;
+            digitalWrite(ledPin, LOW);
             break;
         case 4:
             conv_mode = DR202_ROLLS_HATS;
+            digitalWrite(ledPin, LOW);
             break;
         case 5:
             conv_mode = DR202_ROLLS_PERC;
+            digitalWrite(ledPin, LOW);
             break;
     }
     if (conv_mode != last_conv_mode) {
         aSerial.vvv().p("Conversion mode set to ").pln(convModeNames[conv_mode]);
     }
     last_conv_mode = conv_mode;
+    // blink if favorite mode is set
+    if (conv_mode == DR202) {
+    }
 
    // done with switch reading, main program
     if (conv_mode == BYPASS)
