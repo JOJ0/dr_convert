@@ -39,6 +39,7 @@ const uint8_t midi_ch = 10;
 const uint8_t midi_ch_drbeat = 11;
 const uint8_t midi_ch_volca = 10;
 const uint8_t ledPin = 13;      // LED pin on most Arduinos
+long prevMillisLedBuiltin = 0;
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 const char* convModeNames[] = {"BYPASS", "DR202", "DR202_ROLLS", "DR202_ROLLS_HATS", "DR202_ROLLS_PERC",
@@ -267,6 +268,23 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
     return currentEncoderPos[encNum];
 }
 
+void blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) }
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - previousMillis >= interval) {
+        // save the last time you blinked the LED
+        previousMillis = currentMillis;
+
+        // if the LED is off turn it on and vice-versa:
+        if (ledState == LOW) {
+            ledState = HIGH;
+        }
+        else {
+            ledState = LOW;
+        }
+        digitalWrite(ledPin, ledState);
+    }
+}
 
 void loop()
 {
@@ -314,6 +332,7 @@ void loop()
             break;
         case 2:
             conv_mode = DR202;
+            blinkLed(13, 1000, prevMillisLedBuiltin);
             break;
         case 3:
             conv_mode = DR202_ROLLS;
