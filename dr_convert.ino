@@ -42,6 +42,7 @@ const uint8_t ledPin = 13;      // LED pin on most Arduinos
 //const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
+conv_modes last_conv_mode = BYPASS;
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DR202         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -274,6 +275,32 @@ void loop()
         // aSerial.vvv().pln("Rotary 1 Button is released");
     }
 
+    //uint8_t mode_bitmask = B000;
+    //for (uint8_t i = 0; i < 3; i++) {
+    //    mode_bitmask = mode_bitmask << 1;
+    //    mode_bitmask |= digitalRead(mode_pins[i]);
+    //}
+    //switch (mode_bitmask) {
+    //    case B000:
+    //        conv_mode = BYPASS;
+    //        break;
+    //    case B001:
+    //        conv_mode = VOLCA;
+    //        break;
+    //    case B010:
+    //        conv_mode = DR202;
+    //        break;
+    //    case B011:
+    //        conv_mode = DR202_ROLLS;
+    //        break;
+    //    case B111:
+    //        conv_mode = DR202_ROLLS_HATS;
+    //        break;
+    //    case B101:
+    //        conv_mode = DR202_ROLLS_PERC;
+    //        break;
+    //}
+
     uint8_t modeEncoderPos = getEncoderPos(0, ROTARYMIN, ROTARYMAX);
     switch (modeEncoderPos) {
         case 0:
@@ -281,43 +308,22 @@ void loop()
             break;
         case 1:
             conv_mode = VOLCA;
-            //aSerial.vvv().pln("VOLCA mode set");
+            break;
+        case 2:
+            conv_mode = DR202;
+            break;
+        case 3:
+            conv_mode = DR202_ROLLS;
+            break;
+        case 4:
+            conv_mode = DR202_ROLLS_HATS;
+            break;
+        case 5:
+            conv_mode = DR202_ROLLS_PERC;
             break;
     }
-
-
-    uint8_t mode_bitmask = B000;
-    for (uint8_t i = 0; i < 3; i++) {
-        mode_bitmask = mode_bitmask << 1;
-        mode_bitmask |= digitalRead(mode_pins[i]);
-    }
-    //delay(2000); // enable for debugging mode switches
-    if (mode_bitmask == B000) {
-        conv_mode = BYPASS;
-        aSerial.vvvv().pln("BYPASS mode set");
-    }
-    else if (mode_bitmask == B001) {
-        conv_mode = VOLCA;
-        aSerial.vvvv().pln("VOLCA mode set");
-    }
-    else if (mode_bitmask == B010) {
-        conv_mode = DR202;
-        aSerial.vvvv().pln("DR202 mode set");
-    }
-    else if (mode_bitmask == B011) {
-        conv_mode = DR202_ROLLS;
-        aSerial.vvvv().pln("DR202_ROLLS mode set");
-    }
-    else if (mode_bitmask == B111) {
-        conv_mode = DR202_ROLLS_HATS;
-        aSerial.vvvv().pln("DR202_ROLLS_HATS mode set");
-    }
-    else if (mode_bitmask == B101) {
-        conv_mode = DR202_ROLLS_PERC;
-        aSerial.vvvv().pln("DR202_ROLLS_PERC mode set");
-    }
-    else {
-        aSerial.vvvv().pln("!! INVALID mode set");
+    if (last_conv_mode != conv_mode) {
+        aSerial.vvvv().p("conversion mode set to ").pln(conv_mode);
     }
 
    // done with switch reading, main program
