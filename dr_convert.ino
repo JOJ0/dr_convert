@@ -10,13 +10,10 @@
 #define MODE_SWITCH_1_PIN 5
 #define MODE_SWITCH_2_PIN 6
 #define MODE_SWITCH_3_PIN 7
-#define MODE_SWITCH_1_STATE digitalRead(MODE_SWITCH_1_PIN)
-#define MODE_SWITCH_2_STATE digitalRead(MODE_SWITCH_2_PIN)
-#define MODE_SWITCH_3_STATE digitalRead(MODE_SWITCH_3_PIN)
 uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
-#define ROTARY_SWITCH_1_PIN 12
-#define ROTARYMIN 0
-#define ROTARYMAX 5
+#define MODE_ROTARY_SWITCH_PIN 12
+#define MODE_ROTARY_MIN 0
+#define MODE_ROTARY_MAX 5
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -40,13 +37,11 @@ const uint8_t midi_ch_drbeat = 11;
 const uint8_t midi_ch_volca = 10;
 const uint8_t ledPin = 13;      // LED pin on most Arduinos
 long prevMillisLedBuiltin = 0;
-//const uint8_t ledPins[5] = {9,10,11,12,13};      // LED pins for "we are ready" flashing
 enum conv_modes { BYPASS, DR202, DR202_ROLLS, DR202_ROLLS_HATS, DR202_ROLLS_PERC, VOLCA };
 const char* convModeNames[] = {"BYPASS", "DR202", "DR202_ROLLS", "DR202_ROLLS_HATS", "DR202_ROLLS_PERC",
                                 "VOLCA" };
 conv_modes conv_mode = BYPASS; // initially we want bypass mode (if switch broken or something)
 conv_modes last_conv_mode = BYPASS;
-//printf("%s", convModeNames[conv_mode]);
 
 uint8_t note_mapping[16][8] = {
     // first 8 pads   DR202         DR_ROLLS  DR_ROLLS_2   DR_ROLLS_3    VOLCA   
@@ -85,7 +80,7 @@ static int lastEncoderPos[4] = {0,0,0,0};
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    pinMode(ROTARY_SWITCH_1_PIN, INPUT_PULLUP);
+    pinMode(MODE_ROTARY_SWITCH_PIN, INPUT_PULLUP);
     //for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
     // test MODE_SWITCH_1
     pinMode(MODE_SWITCH_1_PIN, INPUT_PULLUP);
@@ -99,16 +94,14 @@ void setup()
     //PCICR |= 0b00000010;    // turn on port c
     //PCICR |= 0b00000100;    // turn on port d
     //PCICR |= 0b00000111;    // turn on all ports
-
     MIDI.begin(midi_ch);  // Listen to incoming messages on given channel
     //MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to incoming messages on all channels
     //MIDI.turnThruOff();  // Listen to incoming messages on given channel
     MIDI.setThruFilterMode(midi::Thru::Full); // Full: all msg from all channels sent thru
     while(!USBserial); // wait until USBserial is accessible
-    if (mode == 0)
+    if (mode == 0) {
         aSerial.off();  // disable debug output
-    else
-    {
+    } else {
         USBserial.begin(9600);  // common serial rate -> debugging
         aSerial.setPrinter(USBserial);  // debugging settings
         aSerial.setFilter(VERBOSITY); // debugging settings
@@ -116,14 +109,14 @@ void setup()
         aSerial.on();  // enable debug output
     }
     digitalWrite(ledPin, LOW); // DEBUG LED off
-
 }
 
 // The Interrupt Service Routine for Pin Change Interrupt 1
 // This routine will only be called on any signal change on A2 and A3: exactly where we need to check.
 ISR(PCINT1_vect) {
-  encoder[0].tick(); // just call tick() to check the state.
-  encoder[1].tick();
+    for (uint8_t encno = 0; encno < 4; encno++) {
+      encoder[encno].tick(); // just call tick() to check the state.
+    }
 }
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
@@ -242,9 +235,8 @@ uint8_t getButtonState(uint8_t buttonPin) {
     }
     lastButtonState[buttonPin] = buttonState;
     if (changed == 1) {
-	return buttonState;
-    }
-    else {
+        return buttonState;
+    } else {
         return lastButtonState[buttonPin];
     }
 }
@@ -255,8 +247,7 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
     if (currentEncoderPos[encNum] < rotaryMin) {
         currentEncoderPos[encNum] = rotaryMin;
         encoder[encNum].setPosition(rotaryMin);
-    }
-    else if (currentEncoderPos[encNum] > rotaryMax) {
+    } else if (currentEncoderPos[encNum] > rotaryMax) {
         currentEncoderPos[encNum] = rotaryMax;
         encoder[encNum].setPosition(rotaryMax);
     }
@@ -289,11 +280,9 @@ long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
 
 void loop()
 {
-    if (getButtonState(ROTARY_SWITCH_1_PIN) == PRESSED) {
-    //if (getButtonState(MODE_SWITCH_3_PIN) == PRESSED) {
+    if (getButtonState(MODE_ROTARY_SWITCH_PIN) == PRESSED) {
         // aSerial.vvv().pln("Rotary 1 Button is pressed");
-    }
-    else {
+    } else {
         // aSerial.vvv().pln("Rotary 1 Button is released");
     }
 
@@ -323,7 +312,7 @@ void loop()
     //        break;
     //}
 
-    uint8_t modeEncoderPos = getEncoderPos(0, ROTARYMIN, ROTARYMAX);
+    uint8_t modeEncoderPos = getEncoderPos(0, MODE_ROTARY_MIN, MODE_ROTARY_MAX);
     switch (modeEncoderPos) {
         case 0:
             conv_mode = BYPASS;
@@ -354,18 +343,12 @@ void loop()
         aSerial.vvv().p("Conversion mode set to ").pln(convModeNames[conv_mode]);
     }
     last_conv_mode = conv_mode;
-    // blink if favorite mode is set
-    if (conv_mode == DR202) {
-    }
 
    // done with switch reading, main program
-    if (conv_mode == BYPASS)
-    {
+    if (conv_mode == BYPASS) {
         MIDI.setThruFilterMode(midi::Thru::Full); // all msg from all channels sent thru
         setMessageHandles(); // just for now, later this should not be here -> THRU without hassle
-    }
-    else // MODES: DR202, DR202_ROLLS*, VOLCA
-    {
+    } else { // MODES: DR202, DR202_ROLLS*, VOLCA
         MIDI.setThruFilterMode(midi::Thru::DifferentChannel); // all msg except from in-channel go thru
         setMessageHandles(); // NoteOn NoteOff CC etc. handles are defined, we wanna manipulate
     }
