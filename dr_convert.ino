@@ -187,7 +187,7 @@ void handleNoteOff(byte Channel, byte PitchMidi, byte Velocity) { // NoteOn with
 
 void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch)
 {
-    aSerial.vvv().p("sending CC: ").pln(cc_num);
+    aSerial.vvv().p("sending CC: ").p(cc_num).p(" val: ").pln(cc_value);
     aSerial.vvv().pln();
     MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
 }
@@ -255,12 +255,12 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
         currentEncoderPos[encNum] = rotaryMax;
         encoder[encNum].setPosition(rotaryMax);
     }
-
     if (lastEncoderPos[encNum] != currentEncoderPos[encNum]) {
         aSerial.vvv().p("Rotary encoder ").p(encNum).p(" changed to ").pln(currentEncoderPos[encNum]);
-        lastEncoderPos[encNum] = currentEncoderPos[encNum];
+        return currentEncoderPos[encNum];
+    } else {
+        return lastEncoderPos[encNum];
     }
-    return currentEncoderPos[encNum];
 }
 
 long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
@@ -290,69 +290,74 @@ void loop()
         // aSerial.vvv().pln("Rotary 1 Button is released");
     }
 
-    //uint8_t mode_bitmask = B000;
-    //for (uint8_t i = 0; i < 3; i++) {
-    //    mode_bitmask = mode_bitmask << 1;
-    //    mode_bitmask |= digitalRead(mode_pins[i]);
-    //}
-    //switch (mode_bitmask) {
-    //    case B000:
-    //        conv_mode = BYPASS;
-    //        break;
-    //    case B001:
-    //        conv_mode = VOLCA;
-    //        break;
-    //    case B010:
-    //        conv_mode = DR202;
-    //        break;
-    //    case B011:
-    //        conv_mode = DR202_ROLLS;
-    //        break;
-    //    case B111:
-    //        conv_mode = DR202_ROLLS_HATS;
-    //        break;
-    //    case B101:
-    //        conv_mode = DR202_ROLLS_PERC;
-    //        break;
-    //}
-
-    uint8_t modeEncoderPos = getEncoderPos(0, MODE_ROTARY_MIN, MODE_ROTARY_MAX);
-    switch (modeEncoderPos) {
-        case 0:
+    uint8_t mode_bitmask = B000;
+    for (uint8_t i = 0; i < 3; i++) {
+        mode_bitmask = mode_bitmask << 1;
+        mode_bitmask |= digitalRead(mode_pins[i]);
+    }
+    switch (mode_bitmask) {
+        case B000:
             conv_mode = BYPASS;
-            digitalWrite(ledPin, LOW);
             break;
-        case 1:
+        case B001:
             conv_mode = VOLCA;
-            prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
             break;
-        case 2:
+        case B010:
             conv_mode = DR202;
-            prevMillisLedBuiltin = blinkLed(ledPin, 500, prevMillisLedBuiltin);
             break;
-        case 3:
+        case B011:
             conv_mode = DR202_ROLLS;
-            prevMillisLedBuiltin = blinkLed(ledPin, 250, prevMillisLedBuiltin);
             break;
-        case 4:
+        case B111:
             conv_mode = DR202_ROLLS_HATS;
-            prevMillisLedBuiltin = blinkLed(ledPin, 125, prevMillisLedBuiltin);
             break;
-        case 5:
+        case B101:
             conv_mode = DR202_ROLLS_PERC;
-            prevMillisLedBuiltin = blinkLed(ledPin, 63, prevMillisLedBuiltin);
             break;
     }
+
+    //uint8_t modeEncoderPos = getEncoderPos(0, MODE_ROTARY_MIN, MODE_ROTARY_MAX);
+    //switch (modeEncoderPos) {
+    //    case 0:
+    //        conv_mode = BYPASS;
+    //        digitalWrite(ledPin, LOW);
+    //        break;
+    //    case 1:
+    //        conv_mode = VOLCA;
+    //        prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
+    //        break;
+    //    case 2:
+    //        conv_mode = DR202;
+    //        prevMillisLedBuiltin = blinkLed(ledPin, 500, prevMillisLedBuiltin);
+    //        break;
+    //    case 3:
+    //        conv_mode = DR202_ROLLS;
+    //        prevMillisLedBuiltin = blinkLed(ledPin, 250, prevMillisLedBuiltin);
+    //        break;
+    //    case 4:
+    //        conv_mode = DR202_ROLLS_HATS;
+    //        prevMillisLedBuiltin = blinkLed(ledPin, 125, prevMillisLedBuiltin);
+    //        break;
+    //    case 5:
+    //        conv_mode = DR202_ROLLS_PERC;
+    //        prevMillisLedBuiltin = blinkLed(ledPin, 63, prevMillisLedBuiltin);
+    //        break;
+    //}
     if (conv_mode != last_conv_mode) {
         aSerial.vvv().p("Conversion mode set to ").pln(convModeNames[conv_mode]);
     }
     last_conv_mode = conv_mode;
 
-    uint8_t rollTypeEncoderPos = getEncoderPos(2, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
-    uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
-    if (rollTypeEncoderPos != lastEncoderPos[2]) { // if roll type encoder changed, send CC
+    uint8_t rollTypeEncoderPos = getEncoderPos(0, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
+    //aSerial.vvv().p("current pos ").pln(rollTypeEncoderPos);
+    //aSerial.vvv().p("last pos ").pln(lastEncoderPos[0]);
+    //getEncoderPos(0, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
+    //uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
+    if (rollTypeEncoderPos != lastEncoderPos[0]) { // if roll type encoder changed, send CC
         sendCCandLog(123, rollTypeEncoderPos, midi_ch);
+        //sendCCandLog(123, 111, midi_ch);
     }
+    lastEncoderPos[0] = currentEncoderPos[0];
 
    // done with switch reading, main program
     if (conv_mode == BYPASS) {
