@@ -14,6 +14,10 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 #define MODE_ROTARY_SWITCH_PIN 12
 #define MODE_ROTARY_MIN 0
 #define MODE_ROTARY_MAX 5
+#define ROLL_TYPE_ROTARY_MIN 0
+#define ROLL_TYPE_ROTARY_MAX 64
+#define ROLL_SPEED_ROTARY_MIN 0
+#define ROLL_SPEED_ROTARY_MAX 64
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -343,6 +347,12 @@ void loop()
         aSerial.vvv().p("Conversion mode set to ").pln(convModeNames[conv_mode]);
     }
     last_conv_mode = conv_mode;
+
+    uint8_t rollTypeEncoderPos = getEncoderPos(2, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
+    uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
+    if (rollTypeEncoderPos != lastEncoderPos[2]) { // if roll type encoder changed, send CC
+        sendCCandLog(123, rollTypeEncoderPos, midi_ch);
+    }
 
    // done with switch reading, main program
     if (conv_mode == BYPASS) {
