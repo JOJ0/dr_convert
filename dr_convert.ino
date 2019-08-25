@@ -77,7 +77,7 @@ RotaryEncoder encoder[4] = {
     RotaryEncoder(A4, A5),
     RotaryEncoder(A6, A7)
 };
-//RotaryEncoder encoder1(A2, A3); // Setup a RoraryEncoder for pins A2 and A3:
+//RotaryEncoder encoder1(A2, A3); // Setup a RoraryEncoder for pins A2 and A3
 static int currentEncoderPos[4] = {0,0,0,0};
 static int lastEncoderPos[4] = {0,0,0,0};
 
@@ -187,7 +187,7 @@ void handleNoteOff(byte Channel, byte PitchMidi, byte Velocity) { // NoteOn with
 
 void sendCCandLog(uint8_t cc_num, uint8_t cc_value, uint8_t _midi_ch)
 {
-    aSerial.vvv().p("sending CC: ").p(cc_num).p(" val: ").pln(cc_value);
+    aSerial.vvv().p("sending CC: ").p(cc_num).p(", val: ").pln(cc_value);
     aSerial.vvv().pln();
     MIDI.sendControlChange(cc_num, cc_value, _midi_ch);
 }
@@ -256,7 +256,7 @@ uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
         encoder[encNum].setPosition(rotaryMax);
     }
     if (lastEncoderPos[encNum] != currentEncoderPos[encNum]) {
-        aSerial.vvv().p("Rotary encoder ").p(encNum).p(" changed to ").pln(currentEncoderPos[encNum]);
+        aSerial.vvvv().p("Rotary encoder ").p(encNum).p(" changed to ").pln(currentEncoderPos[encNum]);
         return currentEncoderPos[encNum];
     } else {
         return lastEncoderPos[encNum];
@@ -298,24 +298,31 @@ void loop()
     switch (mode_bitmask) {
         case B000:
             conv_mode = BYPASS;
+            digitalWrite(ledPin, LOW);
             break;
         case B001:
             conv_mode = VOLCA;
+            prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
             break;
         case B010:
             conv_mode = DR202;
+            prevMillisLedBuiltin = blinkLed(ledPin, 500, prevMillisLedBuiltin);
             break;
         case B011:
             conv_mode = DR202_ROLLS;
+            prevMillisLedBuiltin = blinkLed(ledPin, 250, prevMillisLedBuiltin);
             break;
         case B111:
             conv_mode = DR202_ROLLS_HATS;
+            prevMillisLedBuiltin = blinkLed(ledPin, 125, prevMillisLedBuiltin);
             break;
         case B101:
             conv_mode = DR202_ROLLS_PERC;
+            prevMillisLedBuiltin = blinkLed(ledPin, 63, prevMillisLedBuiltin);
             break;
     }
 
+    // conversion mode encoder
     //uint8_t modeEncoderPos = getEncoderPos(0, MODE_ROTARY_MIN, MODE_ROTARY_MAX);
     //switch (modeEncoderPos) {
     //    case 0:
@@ -348,18 +355,20 @@ void loop()
     }
     last_conv_mode = conv_mode;
 
+    // roll type encoder
     uint8_t rollTypeEncoderPos = getEncoderPos(0, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
-    //aSerial.vvv().p("current pos ").pln(rollTypeEncoderPos);
-    //aSerial.vvv().p("last pos ").pln(lastEncoderPos[0]);
-    //getEncoderPos(0, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
-    //uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
-    if (rollTypeEncoderPos != lastEncoderPos[0]) { // if roll type encoder changed, send CC
-        sendCCandLog(123, rollTypeEncoderPos, midi_ch);
-        //sendCCandLog(123, 111, midi_ch);
+    if (rollTypeEncoderPos != lastEncoderPos[0]) {    // if roll type encoder changed..
+        sendCCandLog(123, rollTypeEncoderPos, midi_ch); // send CC..
     }
-    lastEncoderPos[0] = currentEncoderPos[0];
+    lastEncoderPos[0] = rollTypeEncoderPos;          // and save EncoderPos in global array
+    // roll speed encoder
+    uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
+    if (rollSpeedEncoderPos != lastEncoderPos[3]) {
+        sendCCandLog(124, rollSpeedEncoderPos, midi_ch);
+    }
+    lastEncoderPos[3] = rollSpeedEncoderPos;
 
-   // done with switch reading, main program
+    // done with switch and encoder reading, main program
     if (conv_mode == BYPASS) {
         MIDI.setThruFilterMode(midi::Thru::Full); // all msg from all channels sent thru
         setMessageHandles(); // just for now, later this should not be here -> THRU without hassle
