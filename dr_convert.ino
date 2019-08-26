@@ -387,7 +387,7 @@ void loop()
     // roll speed encoder
     uint8_t rollSpeedEncoderPos = getEncoderPos(3, ROLL_SPEED_ROTARY_MIN, ROLL_SPEED_ROTARY_MAX);
     if (rollSpeedEncoderPos != lastEncoderPos[3]) {
-        sendCCandLog(35, rollSpeedEncoderPos, midi_ch);
+        sendCCandLog(19, rollSpeedEncoderPos, midi_ch);
     }
     lastEncoderPos[3] = rollSpeedEncoderPos;
 
