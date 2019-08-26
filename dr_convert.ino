@@ -373,7 +373,7 @@ void loop()
     last_conv_mode = conv_mode;
 
     // program encoder
-    uint8_t programEncoderPos = getEncoderPos(1, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
+    uint8_t programEncoderPos = getEncoderPos(1, PROGRAM_USER_ROTARY_MIN, PROGRAM_USER_ROTARY_MAX);
     if (programEncoderPos != lastEncoderPos[1]) {     // if roll type encoder changed..
         sendCCandLog(123, programEncoderPos, midi_ch); // send CC..
     }
