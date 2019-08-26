@@ -18,6 +18,10 @@ uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN}
 #define ROLL_TYPE_ROTARY_MAX 67
 #define ROLL_SPEED_ROTARY_MIN 0
 #define ROLL_SPEED_ROTARY_MAX 127
+#define PROGRAM_USER_ROTARY_MIN 0
+#define PROGRAM_USER_ROTARY_MAX 63
+#define PROGRAM_PRESET_ROTARY_MIN 0
+#define PROGRAM_PRESET_ROTARY_MAX 127
 
 //*** GLOBAL COMPILE AND RUNTIME SETTINGS START ***
 #define USBserial Serial
@@ -75,7 +79,7 @@ RotaryEncoder encoder[4] = {
     RotaryEncoder(A0, A1),
     RotaryEncoder(A2, A3),
     RotaryEncoder(A4, A5),
-    RotaryEncoder(A6, A7)
+    RotaryEncoder(2, 3)
 };
 //RotaryEncoder encoder1(A2, A3); // Setup a RoraryEncoder for pins A2 and A3
 static int currentEncoderPos[4] = {0,0,0,0};
@@ -89,10 +93,14 @@ void setup()
     // test MODE_SWITCH_1
     pinMode(MODE_SWITCH_1_PIN, INPUT_PULLUP);
     // You may have to modify the next 2 lines if using other pins than A2 and A3
-    PCICR |= (1 << PCIE1); // This enables Pin Change Interrupt 1 that covers the Analog input
-                           // pins or Port C.
-    PCMSK1 |= (1 << PCINT8) | (1 << PCINT9);   // enables interrupt for pin 0 and 1 of Port C.
-    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11); // enables interrupt for pin 2 and 3 of Port C.
+    PCICR |= (1 << PCIE1); // enables Pin Change Interrupt 1: A0-A5 or Port C.
+    PCICR |= (1 << PCIE2); // enables Pin Change Interrupt 2: D0-D7
+    //PCICR |= (1 << PCIE0); // enables Pin Change Interrupt 0: D8-D13
+    PCMSK1 |= (1 << PCINT8) | (1 << PCINT9);   // enables interrupt for pins 0,1 of Port C.
+    PCMSK1 |= (1 << PCINT10) | (1 << PCINT11); // enables interrupt for pins 2,3 of Port C.
+    PCMSK1 |= (1 << PCINT12) | (1 << PCINT13); // enables interrupt for pins 4,5 of Port C.
+    PCMSK2 |= (1 << PCINT18) | (1 << PCINT19); // enables interrupt for pins 2,3 of Port D.
+    //PCMSK0 |= (1 << PCINT2) | (1 << PCINT3); // enables interrupt for pins 2,3 of Port B.
     // enabling Pin Change Interrupts might be easier to understand in binary:
     //PCICR |= 0b00000001;    // turn on port b
     //PCICR |= 0b00000010;    // turn on port c
@@ -118,10 +126,16 @@ void setup()
 // The Interrupt Service Routine for Pin Change Interrupt 1
 // This routine will only be called on any signal change on A2 and A3: exactly where we need to check.
 ISR(PCINT1_vect) {
-    for (uint8_t encno = 0; encno < 4; encno++) {
-      encoder[encno].tick(); // just call tick() to check the state.
-    }
+    encoder[0].tick(); // tick checks state
+    encoder[1].tick();
+    encoder[2].tick();
 }
+ISR(PCINT2_vect) {
+    encoder[3].tick();
+}
+//ISR(PCINT0_vect) {
+//    encoder[1].tick();
+//}
 
 void sendNoteONandLog(uint8_t note_num, uint8_t note_vel, uint8_t _midi_ch)
 {
@@ -181,7 +195,7 @@ void handleNoteOff(byte Channel, byte PitchMidi, byte Velocity) { // NoteOn with
             else if (conv_mode == VOLCA) {
                 aSerial.vvv().p("VOLCA NoteOFF: ").pln(note_mapping[note_pos][3]);
                 sendNoteOFFandLog(note_mapping[note_pos][3], Velocity, Channel);}
-        }
+       }
     }
 }
 
@@ -358,6 +372,12 @@ void loop()
     }
     last_conv_mode = conv_mode;
 
+    // program encoder
+    uint8_t programEncoderPos = getEncoderPos(1, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
+    if (programEncoderPos != lastEncoderPos[1]) {     // if roll type encoder changed..
+        sendCCandLog(123, programEncoderPos, midi_ch); // send CC..
+    }
+    lastEncoderPos[1] = programEncoderPos;            // and save EncoderPos in global array
     // roll type encoder
     uint8_t rollTypeEncoderPos = getEncoderPos(2, ROLL_TYPE_ROTARY_MIN, ROLL_TYPE_ROTARY_MAX);
     if (rollTypeEncoderPos != lastEncoderPos[2]) {     // if roll type encoder changed..
