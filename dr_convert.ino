@@ -259,8 +259,8 @@ uint8_t getButtonState(uint8_t buttonPin) {
     }
 }
 
-uint8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
-    uint8_t currentEncoderPos = encoder[encNum].getPosition();
+int8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
+    int8_t currentEncoderPos = encoder[encNum].getPosition();
 
     if (currentEncoderPos < rotaryMin) {
         currentEncoderPos = rotaryMin;
