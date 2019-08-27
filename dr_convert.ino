@@ -213,11 +213,18 @@ void handleControlChange(byte inChannel, byte inNumber, byte inValue) {
         sendCCandLog(inNumber, inValue, inChannel);} // just log and forward CCs without manipulation
 }
 
+void sendPCandLog(uint8_t pc_num, uint8_t _midi_ch)
+{
+    aSerial.vvv().p("sending PC: ").pln(pc_num);
+    aSerial.vvv().pln();
+    MIDI.sendProgramChange(pc_num, _midi_ch);
+}
+
 void handleProgramChange(byte inChannel, byte inNumber) {
     if (conv_mode == BYPASS) { // dont send anything in bypass mode - we dont want doubles!
         aSerial.vvv().p("BYPASS MODE - all thru").pln();}
     else{
-        MIDI.sendProgramChange(inNumber, inChannel);} // just forward PCs without manipulation
+        sendPCandLog(inNumber, inChannel);} // just log and forward PCs without manipulation
 }
 
 void handleStart() {
@@ -375,7 +382,9 @@ void loop()
     // program encoder
     uint8_t programEncoderPos = getEncoderPos(1, PROGRAM_USER_ROTARY_MIN, PROGRAM_USER_ROTARY_MAX);
     if (programEncoderPos != lastEncoderPos[1]) {     // if roll type encoder changed..
-        sendCCandLog(123, programEncoderPos, midi_ch); // send CC..
+        sendCCandLog(0, 85, midi_ch); // Bank Change MSB value 85
+        sendCCandLog(32, 0, midi_ch); // Bank Change LSB value 0
+        sendPCandLog(programEncoderPos, midi_ch); // which program to select
     }
     lastEncoderPos[1] = programEncoderPos;            // and save EncoderPos in global array
     // roll type encoder
