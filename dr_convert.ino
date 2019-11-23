@@ -91,6 +91,8 @@ void setup()
     pinMode(ledPin, OUTPUT);
     for (uint8_t i = 0; i < 3; i++) {pinMode(switch_pins[i], INPUT);}
     pinMode(10, OUTPUT); // decoder pin A
+    pinMode(11, OUTPUT); // decoder pin A
+    pinMode(12, OUTPUT); // decoder pin A
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // enables Pin Change Interrupt 1: A0-A5 or Port C.
     PCICR |= (1 << PCIE2); // enables Pin Change Interrupt 2: D0-D7
@@ -307,9 +309,57 @@ long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
 void loop()
 {
     if (getButtonState(SWITCH_2_PIN) == HIGH) {
-        digitalWrite(10, LOW);
-    } else {
         digitalWrite(10, HIGH);
+        digitalWrite(12, HIGH);
+        digitalWrite(12, HIGH);
+    } else {
+        //digitalWrite(11, LOW);
+        //digitalWrite(12, LOW);
+        for (uint8_t i = 0; i < 7; i++) {
+            switch (i) {
+                case 0:
+                    digitalWrite(10, LOW);
+                    digitalWrite(11, LOW);
+                    digitalWrite(12, LOW);
+                    break;
+                case 1:
+                    digitalWrite(10, HIGH);
+                    digitalWrite(11, LOW);
+                    digitalWrite(12, LOW);
+                    break;
+                case 2:
+                    digitalWrite(10, LOW);
+                    digitalWrite(11, HIGH);
+                    digitalWrite(12, LOW);
+                    break;
+                case 3:
+                    digitalWrite(10, HIGH);
+                    digitalWrite(11, HIGH);
+                    digitalWrite(12, LOW);
+                    break;
+                case 4:
+                    digitalWrite(10, LOW);
+                    digitalWrite(11, LOW);
+                    digitalWrite(12, HIGH);
+                    break;
+                case 5:
+                    digitalWrite(10, HIGH);
+                    digitalWrite(11, LOW);
+                    digitalWrite(12, HIGH);
+                    break;
+                case 6:
+                    digitalWrite(10, LOW);
+                    digitalWrite(11, HIGH);
+                    digitalWrite(12, HIGH);
+                    break;
+                case 7:
+                    digitalWrite(10, HIGH);
+                    digitalWrite(11, HIGH);
+                    digitalWrite(12, HIGH);
+                    break;
+            }
+            delay(500);
+         }
     }
     lastButtonState[1] = buttonState;
 
