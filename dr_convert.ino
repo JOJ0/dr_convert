@@ -7,10 +7,11 @@
 #define PRESSED LOW
 #define RELEASED HIGH
 //give pins a name
-#define MODE_SWITCH_1_PIN 5
-#define MODE_SWITCH_2_PIN 6
-#define MODE_SWITCH_3_PIN 7
-uint8_t mode_pins[3] = {MODE_SWITCH_1_PIN, MODE_SWITCH_2_PIN, MODE_SWITCH_3_PIN};
+#define SWITCH_1_PIN 5
+#define SWITCH_2_PIN 6
+#define SWITCH_3_PIN 7
+//#define SWITCH_4_PIN X
+uint8_t switch_pins[3] = {SWITCH_1_PIN, SWITCH_2_PIN, SWITCH_3_PIN};
 #define MODE_ROTARY_SWITCH_PIN 12
 #define MODE_ROTARY_MIN 0
 #define MODE_ROTARY_MAX 5
@@ -88,10 +89,7 @@ static int lastEncoderPos[4] = {0,0,0,0};
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    pinMode(MODE_ROTARY_SWITCH_PIN, INPUT_PULLUP);
-    //for (uint8_t i = 0; i < 3; i++) {pinMode(mode_pins[i], INPUT);}
-    // test MODE_SWITCH_1
-    pinMode(MODE_SWITCH_1_PIN, INPUT_PULLUP);
+    for (uint8_t i = 0; i < 3; i++) {pinMode(switch_pins[i], INPUT_PULLUP);}
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // enables Pin Change Interrupt 1: A0-A5 or Port C.
     PCICR |= (1 << PCIE2); // enables Pin Change Interrupt 2: D0-D7
@@ -307,16 +305,16 @@ long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
 
 void loop()
 {
-    if (getButtonState(MODE_ROTARY_SWITCH_PIN) == PRESSED) {
-        // aSerial.vvv().pln("Rotary 1 Button is pressed");
+    if (getButtonState(SWITCH_1_PIN) == HIGH) {
+        aSerial.vvv().pln("Button 1 is on");
     } else {
-        // aSerial.vvv().pln("Rotary 1 Button is released");
+        aSerial.vvv().pln("Button 1 is off");
     }
 
     //uint8_t mode_bitmask = B000;
     //for (uint8_t i = 0; i < 3; i++) {
     //    mode_bitmask = mode_bitmask << 1;
-    //    mode_bitmask |= digitalRead(mode_pins[i]);
+    //    mode_bitmask |= digitalRead(switch_pins[i]);
     //}
     //switch (mode_bitmask) {
     //    case B000:
