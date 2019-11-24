@@ -7,11 +7,11 @@
 #define PRESSED LOW
 #define RELEASED HIGH
 //give pins a name
-#define SWITCH_1_PIN 4 // currently not connected!
-#define SWITCH_2_PIN 5
-#define SWITCH_3_PIN 6
-#define SWITCH_4_PIN 7
-uint8_t switch_pins[4] = {SWITCH_1_PIN, SWITCH_2_PIN, SWITCH_3_PIN, SWITCH_4_PIN};
+#define MUX_SEL_A_PIN 4
+#define MUX_SEL_B_PIN 5
+//#define MUX_SEL_C_PIN X // connected to ground
+#define MUX_INPUT_PIN A6
+//uint8_t mux_sel_pins[2] = {MUX_SEL_A_PIN, MUX_SEL_B_PIN};
 #define MODE_ROTARY_SWITCH_PIN 12
 #define MODE_ROTARY_MIN 0
 #define MODE_ROTARY_MAX 5
@@ -73,7 +73,8 @@ uint8_t note_mapping[16][8] = {
     {51, 51,107,51}, // RIDE                                ROLL HIT 3            
 };
 
-static int buttonState = 0;
+//static int buttonState = 0;
+static int buttonState[4] = {0,0,0,0};
 static int lastButtonState[4] = {0,0,0,0};
 
 RotaryEncoder encoder[4] = {
@@ -89,10 +90,10 @@ static int lastEncoderPos[4] = {0,0,0,0};
 void setup()
 {
     pinMode(ledPin, OUTPUT);
-    for (uint8_t i = 0; i < 3; i++) {pinMode(switch_pins[i], INPUT);}
-    pinMode(10, OUTPUT); // decoder pin A
-    pinMode(11, OUTPUT); // decoder pin A
-    pinMode(12, OUTPUT); // decoder pin A
+    //for (uint8_t i = 0; i < 2; i++) {pinMode(mux_sel_pins[i], OUTPUT);}
+    pinMode(MUX_SEL_A_PIN, OUTPUT); // multiplexer select pin
+    pinMode(MUX_SEL_B_PIN, OUTPUT); // multiplexer select pin
+    pinMode(MUX_INPUT_PIN, INPUT); // multiplexer input to arduino pin ! it's an analog-only pin!
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // enables Pin Change Interrupt 1: A0-A5 or Port C.
     PCICR |= (1 << PCIE2); // enables Pin Change Interrupt 2: D0-D7
@@ -252,18 +253,52 @@ void setMessageHandles()
     MIDI.setHandleClock(handleClock);
 }
 
-uint8_t getButtonState(uint8_t buttonPin) {
-    uint8_t changed = 0;
-    buttonState = digitalRead(buttonPin);
-    if (buttonState != lastButtonState[buttonPin]) {
-        aSerial.vvv().p("Button on pin ").p(buttonPin).p(" changed to ").pln(buttonState);
-        changed = 1;
-    }
-    lastButtonState[buttonPin] = buttonState;
-    if (changed == 1) {
-        return buttonState;
-    } else {
-        return lastButtonState[buttonPin];
+//uint8_t getButtonState(uint8_t buttonPin) {
+//    uint8_t changed = 0;
+//    buttonState = digitalRead(buttonPin);
+//    if (buttonState != lastButtonState[buttonPin]) {
+//        aSerial.vvv().p("Button on pin ").p(buttonPin).p(" changed to ").pln(buttonState);
+//        changed = 1;
+//    }
+//    lastButtonState[buttonPin] = buttonState;
+//    if (changed == 1) {
+//        return buttonState;
+//    } else {
+//        return lastButtonState[buttonPin];
+//    }
+//}
+
+uint8_t readMuxButtons() {
+    for (int i = 0; i < 4; i++) {
+        //digitalWrite(MUX_SEL_A_PIN, HIGH && (i & B00000001));
+        //digitalWrite(MUX_SEL_B_PIN, HIGH && (i & B00000010));
+        switch (i) {
+            case 0:
+                digitalWrite(MUX_SEL_A_PIN, LOW);
+                digitalWrite(MUX_SEL_B_PIN, LOW);
+                break;
+            case 1:
+                digitalWrite(MUX_SEL_A_PIN, HIGH);
+                digitalWrite(MUX_SEL_B_PIN, LOW);
+                break;
+            case 2:
+                digitalWrite(MUX_SEL_A_PIN, LOW);
+                digitalWrite(MUX_SEL_B_PIN, HIGH);
+                break;
+            case 3:
+                digitalWrite(MUX_SEL_A_PIN, HIGH);
+                digitalWrite(MUX_SEL_B_PIN, HIGH);
+                break;
+        }
+        //digitalWrite(MUX_SEL_A_PIN, HIGH);
+        //digitalWrite(MUX_SEL_B_PIN, HIGH);
+        buttonState[i] = analogRead(MUX_INPUT_PIN);
+        aSerial.vvv().p("Button 0 ").pln(buttonState[0]);
+        aSerial.vvv().p("Button 1 ").pln(buttonState[1]);
+        aSerial.vvv().p("Button 2 ").pln(buttonState[2]);
+        aSerial.vvv().p("Button 3 ").pln(buttonState[3]);
+        aSerial.vvv().pln();
+        delay(500);
     }
 }
 
@@ -308,60 +343,23 @@ long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
 
 void loop()
 {
-    if (getButtonState(SWITCH_2_PIN) == HIGH) {
-        digitalWrite(10, HIGH);
-        digitalWrite(12, HIGH);
-        digitalWrite(12, HIGH);
-    } else {
+    //if (getButtonState(SWITCH_2_PIN) == HIGH) {
+    //    digitalWrite(10, HIGH);
+    //    digitalWrite(12, HIGH);
+    //    digitalWrite(12, HIGH);
+    //} else {
         //digitalWrite(11, LOW);
         //digitalWrite(12, LOW);
-        for (uint8_t i = 0; i < 7; i++) {
-            switch (i) {
-                case 0:
-                    digitalWrite(10, LOW);
-                    digitalWrite(11, LOW);
-                    digitalWrite(12, LOW);
-                    break;
-                case 1:
-                    digitalWrite(10, HIGH);
-                    digitalWrite(11, LOW);
-                    digitalWrite(12, LOW);
-                    break;
-                case 2:
-                    digitalWrite(10, LOW);
-                    digitalWrite(11, HIGH);
-                    digitalWrite(12, LOW);
-                    break;
-                case 3:
-                    digitalWrite(10, HIGH);
-                    digitalWrite(11, HIGH);
-                    digitalWrite(12, LOW);
-                    break;
-                case 4:
-                    digitalWrite(10, LOW);
-                    digitalWrite(11, LOW);
-                    digitalWrite(12, HIGH);
-                    break;
-                case 5:
-                    digitalWrite(10, HIGH);
-                    digitalWrite(11, LOW);
-                    digitalWrite(12, HIGH);
-                    break;
-                case 6:
-                    digitalWrite(10, LOW);
-                    digitalWrite(11, HIGH);
-                    digitalWrite(12, HIGH);
-                    break;
-                case 7:
-                    digitalWrite(10, HIGH);
-                    digitalWrite(11, HIGH);
-                    digitalWrite(12, HIGH);
-                    break;
-            }
-            delay(500);
-         }
-    }
-    lastButtonState[1] = buttonState;
+    readMuxButtons();
+    //for (uint8_t i = 0; i < 4; i++) {
+    //    if (i == 3) {
+    //        Serial.println(buttonState[i]);
+    //    } else {
+    //        Serial.print(buttonState[i]);
+    //        Serial.print(",");
+    //    }
+    //}
+    //lastButtonState[1] = buttonState;
 
     //uint8_t mode_bitmask = B000;
     //for (uint8_t i = 0; i < 3; i++) {
