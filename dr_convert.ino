@@ -2,6 +2,7 @@
 #include <advancedSerial.h>
 #include <AltSoftSerial.h>
 #include <RotaryEncoder.h>
+#include "Type4051Mux.h"
 
 #define ELEMENTCOUNT(x)  (sizeof(x) / sizeof(x[0]))
 #define PRESSED LOW
@@ -76,6 +77,7 @@ uint8_t note_mapping[16][8] = {
 //static int buttonState = 0;
 static int buttonState[4] = {0,0,0,0};
 static int lastButtonState[4] = {0,0,0,0};
+Type4051Mux buttonMux(MUX_INPUT_PIN, INPUT, ANALOG, MUX_SEL_A_PIN, MUX_SEL_B_PIN);
 
 RotaryEncoder encoder[4] = {
     RotaryEncoder(A0, A1),
@@ -91,9 +93,9 @@ void setup()
 {
     pinMode(ledPin, OUTPUT);
     //for (uint8_t i = 0; i < 2; i++) {pinMode(mux_sel_pins[i], OUTPUT);}
-    pinMode(MUX_SEL_A_PIN, OUTPUT); // multiplexer select pin
-    pinMode(MUX_SEL_B_PIN, OUTPUT); // multiplexer select pin
-    pinMode(MUX_INPUT_PIN, INPUT); // multiplexer input to arduino pin ! it's an analog-only pin!
+    //pinMode(MUX_SEL_A_PIN, OUTPUT); // multiplexer select pin
+    //pinMode(MUX_SEL_B_PIN, OUTPUT); // multiplexer select pin
+    //pinMode(MUX_INPUT_PIN, INPUT); // multiplexer input to arduino pin ! it's an analog-only pin!
     // You may have to modify the next 2 lines if using other pins than A2 and A3
     PCICR |= (1 << PCIE1); // enables Pin Change Interrupt 1: A0-A5 or Port C.
     PCICR |= (1 << PCIE2); // enables Pin Change Interrupt 2: D0-D7
@@ -268,39 +270,6 @@ void setMessageHandles()
 //    }
 //}
 
-uint8_t readMuxButtons() {
-    for (int i = 0; i < 4; i++) {
-        //digitalWrite(MUX_SEL_A_PIN, HIGH && (i & B00000001));
-        //digitalWrite(MUX_SEL_B_PIN, HIGH && (i & B00000010));
-        switch (i) {
-            case 0:
-                digitalWrite(MUX_SEL_A_PIN, LOW);
-                digitalWrite(MUX_SEL_B_PIN, LOW);
-                break;
-            case 1:
-                digitalWrite(MUX_SEL_A_PIN, HIGH);
-                digitalWrite(MUX_SEL_B_PIN, LOW);
-                break;
-            case 2:
-                digitalWrite(MUX_SEL_A_PIN, LOW);
-                digitalWrite(MUX_SEL_B_PIN, HIGH);
-                break;
-            case 3:
-                digitalWrite(MUX_SEL_A_PIN, HIGH);
-                digitalWrite(MUX_SEL_B_PIN, HIGH);
-                break;
-        }
-        //digitalWrite(MUX_SEL_A_PIN, HIGH);
-        //digitalWrite(MUX_SEL_B_PIN, HIGH);
-        buttonState[i] = analogRead(MUX_INPUT_PIN);
-        aSerial.vvv().p("Button 0 ").pln(buttonState[0]);
-        aSerial.vvv().p("Button 1 ").pln(buttonState[1]);
-        aSerial.vvv().p("Button 2 ").pln(buttonState[2]);
-        aSerial.vvv().p("Button 3 ").pln(buttonState[3]);
-        aSerial.vvv().pln();
-        delay(500);
-    }
-}
 
 int8_t getEncoderPos(uint8_t encNum, uint8_t rotaryMin, uint8_t rotaryMax) {
     int8_t currentEncoderPos = encoder[encNum].getPosition();
@@ -343,22 +312,16 @@ long blinkLed(uint8_t ledPin, uint16_t interval, long previousMillis) {
 
 void loop()
 {
-    //if (getButtonState(SWITCH_2_PIN) == HIGH) {
-    //    digitalWrite(10, HIGH);
-    //    digitalWrite(12, HIGH);
-    //    digitalWrite(12, HIGH);
-    //} else {
-        //digitalWrite(11, LOW);
-        //digitalWrite(12, LOW);
-    readMuxButtons();
-    //for (uint8_t i = 0; i < 4; i++) {
-    //    if (i == 3) {
-    //        Serial.println(buttonState[i]);
-    //    } else {
-    //        Serial.print(buttonState[i]);
-    //        Serial.print(",");
-    //    }
-    //}
+    for (byte i = 0; i < 4; ++i) {
+        buttonState[i] = buttonMux.read(i);
+        aSerial.vvv().p("Button 0 ").pln(buttonState[0]);
+        aSerial.vvv().p("Button 1 ").pln(buttonState[1]);
+        aSerial.vvv().p("Button 2 ").pln(buttonState[2]);
+        aSerial.vvv().p("Button 3 ").pln(buttonState[3]);
+        aSerial.vvv().pln();
+    }
+    delay(500);
+
     //lastButtonState[1] = buttonState;
 
     //uint8_t mode_bitmask = B000;
@@ -374,22 +337,6 @@ void loop()
     //    case B001:
     //        conv_mode = VOLCA;
     //        prevMillisLedBuiltin = blinkLed(ledPin, 1000, prevMillisLedBuiltin);
-    //        break;
-    //    case B010:
-    //        conv_mode = DR202;
-    //        prevMillisLedBuiltin = blinkLed(ledPin, 500, prevMillisLedBuiltin);
-    //        break;
-    //    case B011:
-    //        conv_mode = DR202_ROLLS;
-    //        prevMillisLedBuiltin = blinkLed(ledPin, 250, prevMillisLedBuiltin);
-    //        break;
-    //    case B111:
-    //        conv_mode = DR202_ROLLS_HATS;
-    //        prevMillisLedBuiltin = blinkLed(ledPin, 125, prevMillisLedBuiltin);
-    //        break;
-    //    case B101:
-    //        conv_mode = DR202_ROLLS_PERC;
-    //        prevMillisLedBuiltin = blinkLed(ledPin, 63, prevMillisLedBuiltin);
     //        break;
     //}
 
